@@ -654,3 +654,70 @@ function loop() {
   draw();
   requestAnimationFrame(loop);
 }
+
+// ── Remote Control (PeerJS WebRTC) ────────────────────────────────────────────
+(function initRemoteControl() {
+  if (typeof Peer === 'undefined') return;
+
+  const SAFE_CHARS = 'abcdefghjkmnpqrstuvwxyz23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += SAFE_CHARS[Math.floor(Math.random() * SAFE_CHARS.length)];
+  const PEER_ID = code;
+
+  function setRemoteStatus(text, dotClass) {
+    const dot = document.getElementById('remote-dot');
+    const txt = document.getElementById('remote-status-text');
+    if (dot) { dot.className = dotClass || ''; }
+    if (txt) txt.textContent = text;
+  }
+
+  const remotePeer = new Peer(PEER_ID, { debug: 0 });
+
+  remotePeer.on('open', id => {
+    const displayCode = id.toUpperCase();
+    const el = document.getElementById('room-code');
+    if (el) el.textContent = displayCode;
+    setRemoteStatus('Waiting for phone…', 'waiting');
+
+    if (typeof QRCode !== 'undefined') {
+      const controllerUrl = new URL('controller.html', window.location.href).href + '?room=' + id;
+      new QRCode(document.getElementById('remote-qr'), {
+        text: controllerUrl,
+        width: 80,
+        height: 80,
+        colorDark: '#1a1a2e',
+        colorLight: '#f0d080',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    }
+  });
+
+  remotePeer.on('connection', conn => {
+    conn.on('open', () => setRemoteStatus('Phone connected ✓', 'connected'));
+
+    conn.on('data', data => {
+      if (!data || !data.type) return;
+      if (data.type === 'jump') {
+        if (state === 'running') {
+          doJump();
+        } else {
+          const btn = document.getElementById('startBtn');
+          if (btn) btn.click();
+        }
+      }
+      if (data.type === 'duck') {
+        keys['ArrowDown'] = !!data.down && state === 'running';
+      }
+    });
+
+    conn.on('close', () => {
+      keys['ArrowDown'] = false;
+      setRemoteStatus('Phone disconnected', 'error');
+      setTimeout(() => setRemoteStatus('Waiting for phone…', 'waiting'), 2000);
+    });
+  });
+
+  remotePeer.on('error', err => {
+    setRemoteStatus('Error: ' + err.type, 'error');
+  });
+}());

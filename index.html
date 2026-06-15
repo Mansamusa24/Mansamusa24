@@ -12,10 +12,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       font-family: 'Segoe UI', sans-serif;
       color: #fff;
-      overflow: hidden;
+      overflow: auto;
     }
     #ui {
       display: flex;
@@ -61,6 +61,35 @@
       cursor: pointer;
     }
     #overlay button:hover { background: #ffe066; }
+
+    /* ── Remote Control panel ── */
+    #remote-panel {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(240,208,128,0.25);
+      border-radius: 12px;
+      padding: 10px 16px;
+      width: 800px;
+    }
+    #remote-qr { flex-shrink: 0; width: 80px; height: 80px; background: #f0d080; border-radius: 6px; }
+    #remote-qr canvas, #remote-qr img { width: 80px !important; height: 80px !important; border-radius: 6px; }
+    #remote-info { flex: 1; text-align: left; }
+    #remote-title { font-size: 13px; font-weight: bold; color: #f0d080; margin-bottom: 4px; }
+    #remote-room  { font-size: 12px; color: #bbb; margin-bottom: 4px; }
+    #remote-room strong { font-family: monospace; font-size: 16px; letter-spacing: 4px; color: #fff; }
+    #remote-status-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #aaa; }
+    #remote-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #555;
+      transition: background 0.3s;
+    }
+    #remote-dot.waiting   { background: #f0d080; animation: rpulse 1s ease-in-out infinite alternate; }
+    #remote-dot.connected { background: #4caf50; }
+    #remote-dot.error     { background: #f44336; }
+    @keyframes rpulse { from { opacity: 0.4; } to { opacity: 1; } }
+    #remote-hint { font-size: 11px; color: #666; margin-top: 4px; }
   </style>
 </head>
 <body>
@@ -74,12 +103,27 @@
     SPACE / Up Arrow — Jump &nbsp;|&nbsp; Down Arrow — Duck &nbsp;|&nbsp; Avoid obstacles &amp; collect coins!
   </div>
 
+  <div id="remote-panel">
+    <div id="remote-qr"></div>
+    <div id="remote-info">
+      <div id="remote-title">📱 Remote Control</div>
+      <div id="remote-room">Room: <strong id="room-code">—</strong></div>
+      <div id="remote-status-row">
+        <div id="remote-dot"></div>
+        <span id="remote-status-text">Starting…</span>
+      </div>
+      <div id="remote-hint">Scan the QR code with your phone to control the game remotely</div>
+    </div>
+  </div>
+
   <div id="overlay">
     <h1>🐴 Horse Rider</h1>
     <p>Jump over logs, duck under branches,<br>collect coins, and ride as far as you can!</p>
     <button id="startBtn">Start Riding!</button>
   </div>
 
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

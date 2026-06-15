@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Horse Rider — Remote</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a1a2e;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #status-bar {
+      background: #0d0d1a;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: #aaa;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    #status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666;
+      transition: background 0.3s;
+    }
+    #status-dot.connected { background: #4caf50; }
+    #status-dot.error     { background: #f44336; }
+    #status-dot.waiting   { background: #f0d080; animation: pulse 1s ease-in-out infinite alternate; }
+    @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+
+    /* ── Connect panel ── */
+    #connect-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding: 32px 24px;
+    }
+    #connect-panel h2 { color: #f0d080; font-size: 24px; }
+    #connect-panel p  { color: #aaa; font-size: 14px; text-align: center; line-height: 1.5; }
+    #room-input {
+      background: #2a2a4e;
+      border: 2px solid #f0d080;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 24px;
+      text-align: center;
+      padding: 10px 16px;
+      width: 200px;
+      text-transform: uppercase;
+      letter-spacing: 5px;
+      outline: none;
+    }
+    #room-input::placeholder { color: #555; letter-spacing: 3px; font-size: 18px; }
+    #connect-btn {
+      background: #f0d080;
+      border: none;
+      color: #1a1a2e;
+      font-size: 18px;
+      font-weight: bold;
+      padding: 13px 36px;
+      border-radius: 10px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+    #connect-btn:active  { background: #ffe066; transform: scale(0.97); }
+    #connect-btn:disabled { opacity: 0.5; }
+
+    /* ── Controller buttons ── */
+    #controls-panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      gap: 8px;
+      padding: 8px;
+    }
+    #controls-panel.visible { display: flex; }
+
+    .ctrl-btn {
+      flex: 1;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 6px;
+      touch-action: manipulation;
+      transition: transform 0.05s, filter 0.05s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ctrl-btn:active { transform: scale(0.97); filter: brightness(0.88); }
+
+    #jump-btn {
+      background: linear-gradient(145deg, #f0d080, #c8a828);
+      color: #1a1a2e;
+    }
+    #duck-btn {
+      background: linear-gradient(145deg, #5599e0, #2060a0);
+      color: #fff;
+    }
+    .ctrl-icon  { font-size: 52px; line-height: 1; }
+    .ctrl-label { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
+    .ctrl-hint  { font-size: 12px; opacity: 0.55; }
+  </style>
+</head>
+<body>
+
+<div id="status-bar">
+  <div id="status-dot"></div>
+  <span id="status-text">Not connected</span>
+</div>
+
+<div id="connect-panel">
+  <h2>🐴 Horse Rider</h2>
+  <p>Enter the room code shown<br>on the game screen</p>
+  <input id="room-input" type="text" placeholder="XXXXXX"
+         maxlength="12" autocomplete="off" autocorrect="off"
+         autocapitalize="characters" spellcheck="false" />
+  <button id="connect-btn">Connect</button>
+</div>
+
+<div id="controls-panel">
+  <button id="jump-btn" class="ctrl-btn">
+    <span class="ctrl-icon">↑</span>
+    <span class="ctrl-label">JUMP</span>
+    <span class="ctrl-hint">tap to jump / start game</span>
+  </button>
+  <button id="duck-btn" class="ctrl-btn">
+    <span class="ctrl-icon">↓</span>
+    <span class="ctrl-label">DUCK</span>
+    <span class="ctrl-hint">hold to duck under branches</span>
+  </button>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+  const params    = new URLSearchParams(window.location.search);
+  const roomParam = params.get('room');
+  const input     = document.getElementById('room-input');
+  const connectBtn = document.getElementById('connect-btn');
+
+  if (roomParam) input.value = roomParam.toUpperCase();
+
+  let peer = null;
+  let conn = null;
+
+  function setStatus(text, state) {
+    document.getElementById('status-text').textContent = text;
+    document.getElementById('status-dot').className    = state || '';
+  }
+
+  function showControls() {
+    document.getElementById('connect-panel').style.display = 'none';
+    document.getElementById('controls-panel').classList.add('visible');
+  }
+
+  function showConnect() {
+    document.getElementById('connect-panel').style.display = '';
+    document.getElementById('controls-panel').classList.remove('visible');
+    connectBtn.disabled = false;
+  }
+
+  function send(data) {
+    if (conn && conn.open) conn.send(data);
+  }
+
+  function connect() {
+    const roomCode = input.value.trim().toLowerCase();
+    if (!roomCode) return;
+
+    setStatus('Connecting…', 'waiting');
+    connectBtn.disabled = true;
+
+    if (peer) { try { peer.destroy(); } catch (_) {} }
+
+    peer = new Peer({ debug: 0 });
+
+    peer.on('open', () => {
+      conn = peer.connect(roomCode, { reliable: true });
+      conn.on('open', () => {
+        setStatus('Connected ✓', 'connected');
+        showControls();
+      });
+      conn.on('close', () => {
+        setStatus('Disconnected — reconnect?', 'error');
+        conn = null;
+        showConnect();
+      });
+      conn.on('error', err => setStatus('Connection error', 'error'));
+    });
+
+    peer.on('error', err => {
+      setStatus('Failed to connect: ' + err.type, 'error');
+      showConnect();
+    });
+  }
+
+  connectBtn.addEventListener('click', connect);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') connect(); });
+
+  if (roomParam) connect();
+
+  // ── Buttons ──────────────────────────────────────────────────────────────────
+  const jumpBtn = document.getElementById('jump-btn');
+  const duckBtn = document.getElementById('duck-btn');
+
+  function vibrate(ms) { if (navigator.vibrate) navigator.vibrate(ms); }
+
+  // Jump
+  jumpBtn.addEventListener('touchstart', e => {
+    e.preventDefault();
+    send({ type: 'jump' });
+    vibrate(25);
+  }, { passive: false });
+  jumpBtn.addEventListener('mousedown', () => send({ type: 'jump' }));
+
+  // Duck (hold = duck, release = stand)
+  function duckStart(e) {
+    e && e.preventDefault();
+    send({ type: 'duck', down: true });
+    vibrate(15);
+  }
+  function duckEnd(e) {
+    e && e.preventDefault();
+    send({ type: 'duck', down: false });
+  }
+  duckBtn.addEventListener('touchstart',  duckStart, { passive: false });
+  duckBtn.addEventListener('touchend',    duckEnd,   { passive: false });
+  duckBtn.addEventListener('touchcancel', duckEnd,   { passive: false });
+  duckBtn.addEventListener('mousedown',   duckStart);
+  duckBtn.addEventListener('mouseup',     duckEnd);
+  duckBtn.addEventListener('mouseleave',  duckEnd);
+</script>
+</body>
+</html>
