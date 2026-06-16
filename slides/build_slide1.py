@@ -43,8 +43,8 @@ try:
         for tag, val in exif.items():
             if TAGS.get(tag) == 'Orientation':
                 if val == 3:   bg = bg.rotate(180, expand=True)
-                elif val == 6: bg = bg.rotate(270, expand=True)
-                elif val == 8: bg = bg.rotate(90,  expand=True)
+                elif val == 6: bg = bg.rotate(90,  expand=True)
+                elif val == 8: bg = bg.rotate(270, expand=True)
 except Exception:
     pass
 
