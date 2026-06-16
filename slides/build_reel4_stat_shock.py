@@ -16,7 +16,7 @@ TG_PATH   = os.path.join(os.path.dirname(__file__), "telegram_logo.png")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
-BOLD     = f"{FONT_DIR}/BigShoulders-Bold.ttf"
+BOLD     = f"{FONT_DIR}/Anton-Regular.ttf"
 
 GOLD  = (240, 180, 41)
 WHITE = (255, 255, 255)

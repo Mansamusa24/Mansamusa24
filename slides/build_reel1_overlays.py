@@ -12,8 +12,8 @@ W, H     = 1080, 1920
 OUT_DIR  = os.path.join(os.path.dirname(__file__), "reel1_overlays")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-FONT_DIR = "/usr/share/fonts/truetype"
-BOLD     = f"{FONT_DIR}/liberation/LiberationSans-Bold.ttf"
+FONT_DIR = os.path.join(os.path.dirname(__file__), "fonts")
+BOLD     = f"{FONT_DIR}/Anton-Regular.ttf"
 
 GOLD  = (240, 180, 41)
 WHITE = (255, 255, 255)
