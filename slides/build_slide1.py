@@ -32,17 +32,31 @@ F_MED   = load(BOLD, 52)
 F_SMALL = load(BOLD, 32)
 F_TINY  = load(BOLD, 24)
 
-# ── 1. Background: scale to FILL 1080x1350, centre-crop ─────────────────────
-bg      = Image.open(BG_PATH).convert("RGB")
+# ── 1. Background: correct EXIF rotation, scale to FILL 1080x1350, centre-crop
+from PIL.ExifTags import TAGS
+bg = Image.open(BG_PATH).convert("RGB")
+
+# Auto-rotate based on EXIF orientation
+try:
+    exif = bg._getexif()
+    if exif:
+        for tag, val in exif.items():
+            if TAGS.get(tag) == 'Orientation':
+                if val == 3:   bg = bg.rotate(180, expand=True)
+                elif val == 6: bg = bg.rotate(270, expand=True)
+                elif val == 8: bg = bg.rotate(90,  expand=True)
+except Exception:
+    pass
+
 scale_w = W / bg.width
 scale_h = H / bg.height
-scale   = max(scale_w, scale_h)          # fill — never letterbox
+scale   = max(scale_w, scale_h)
 new_w   = int(bg.width  * scale)
 new_h   = int(bg.height * scale)
 bg      = bg.resize((new_w, new_h), Image.LANCZOS)
-left    = (new_w - W) // 2 - 200   # shift left to centre steering wheel
+left    = (new_w - W) // 2
 top     = (new_h - H) // 2
-bg      = bg.crop((max(0, left), max(0, top), max(0, left) + W, max(0, top) + H))
+bg      = bg.crop((left, top, left + W, top + H))
 
 slide = bg.copy()
 draw  = ImageDraw.Draw(slide)
