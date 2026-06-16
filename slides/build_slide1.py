@@ -13,7 +13,7 @@ import os
 
 W, H      = 1080, 1350
 OUT_DIR   = os.path.join(os.path.dirname(__file__), "market-structure", "output")
-BG_PATH   = os.path.join(os.path.dirname(__file__), "bg_slide1.png")
+BG_PATH   = os.path.join(os.path.dirname(__file__), "bg_slide1.jpg")
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "titus_logo_transparent.png")
 FONT_DIR  = "/usr/share/fonts/truetype"
 
