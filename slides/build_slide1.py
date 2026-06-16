@@ -83,9 +83,17 @@ def fit_font(draw, text, max_size, min_size=36):
             return f
     return load(BOLD, min_size)
 
+def bold_text(draw, x, y, text, font, fill):
+    stroke = 2
+    for dx in range(-stroke, stroke + 1):
+        for dy in range(-stroke, stroke + 1):
+            if dx != 0 or dy != 0:
+                draw.text((x + dx, y + dy), text, font=font, fill=(0, 0, 0))
+    draw.text((x, y), text, font=font, fill=fill)
+
 def draw_centred(draw, text, font, y, fill=WHITE):
     x = (W - text_w(draw, text, font)) // 2
-    draw.text((x, y), text, font=font, fill=fill)
+    bold_text(draw, x, y, text, font, fill)
     lh = draw.textbbox((0,0), "A", font=font)[3]
     return y + lh + 8
 

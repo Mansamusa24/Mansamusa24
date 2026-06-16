@@ -40,9 +40,18 @@ def tw(draw, text, font):
 def lh(draw, font, gap=10):
     return draw.textbbox((0,0), "A", font=font)[3] + gap
 
+def bold_text(draw, x, y, text, font, fill):
+    """Draw text with stroke to simulate extra-bold weight."""
+    stroke = 2
+    for dx in range(-stroke, stroke + 1):
+        for dy in range(-stroke, stroke + 1):
+            if dx != 0 or dy != 0:
+                draw.text((x + dx, y + dy), text, font=font, fill=(0, 0, 0))
+    draw.text((x, y), text, font=font, fill=fill)
+
 def centred(draw, text, font, y, fill=WHITE):
     x = (W - tw(draw, text, font)) // 2
-    draw.text((x, y), text, font=font, fill=fill)
+    bold_text(draw, x, y, text, font, fill)
     return y + lh(draw, font)
 
 def mixed(draw, segments, font, y):
