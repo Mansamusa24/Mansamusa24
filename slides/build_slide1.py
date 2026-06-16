@@ -119,12 +119,12 @@ avail   = text_bot - text_top
 y_start = text_top + max(0, (avail - total_h) // 2)
 
 y = y_start
-y = draw_centred(draw, "BEFORE YOU PLACE",  F_LARGE, y)
-y = draw_centred(draw, "ANOTHER TRADE —",   F_LARGE, y)
-y = draw_line_mixed(draw, [("MASTER ", WHITE), ("MARKET", GOLD)], y, F_LARGE) + line_gap
-y = draw_centred(draw, "STRUCTURE.",  F_LARGE, y, fill=GOLD)
-y = draw_centred(draw, "HERE'S WHAT THE PROS", F_MED, y + 4)
-y = draw_centred(draw, "DON'T TEACH:", F_MED, y)
+y = draw_centred(draw, "EVERY TRADER NEEDS",  F_LARGE, y)
+y = draw_centred(draw, "TO KNOW THIS FIRST.",   F_LARGE, y)
+y = draw_line_mixed(draw, [("THE TRUTH ABOUT ", WHITE), ("MARKET", GOLD)], y, F_MED) + line_gap
+y = draw_centred(draw, "STRUCTURE",  F_LARGE, y, fill=GOLD)
+y = draw_centred(draw, "THE PROS NEVER", F_MED, y + 4)
+y = draw_centred(draw, "TALK ABOUT:", F_MED, y)
 y += 18
 y = draw_line_mixed(draw, [("SWIPE TO LEARN  ", WHITE), ("→", GOLD)], y, F_SMALL)
 
