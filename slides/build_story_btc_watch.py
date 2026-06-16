@@ -5,7 +5,7 @@ left almost untouched, with a hand-marked-up annotation (box + arrow + short
 note) pointing at the level being watched, instead of a banner/header on top.
 """
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
 
 W, H      = 1080, 1920
@@ -44,8 +44,27 @@ def draw_arrow(draw, x, y_top, y_bottom, colour, width=5):
         (x, y_top - 2),
     ], fill=colour)
 
+def remove_mco_watermark(img):
+    """Blur out the 'More Crypto Online' watermark text and replace it with
+    our own logo in the same spot, redrawing the fib line that runs through it."""
+    line_y, line_colour = 142, (204, 112, 127)
+
+    band = img.crop((0, 20, 858, line_y - 1))
+    band = band.filter(ImageFilter.GaussianBlur(30))
+    img.paste(band, (0, 20))
+
+    draw = ImageDraw.Draw(img)
+    draw.line([(0, line_y), (858, line_y)], fill=line_colour, width=2)
+
+    logo = Image.open(LOGO_PATH).convert("RGBA")
+    logo.thumbnail((170, 170), Image.LANCZOS)
+    lw, lh_ = logo.size
+    logo.putalpha(logo.getchannel("A").point(lambda a: int(a * 0.9)))
+    img.paste(logo, (430 - lw // 2, 95 - lh_ // 2), logo)
+
 def build():
     img  = make_bg().convert("RGBA")
+    remove_mco_watermark(img)
     draw = ImageDraw.Draw(img)
 
     # Mark up the fib confluence zone (38.2% -> 61.8%) with a hand-drawn-style box.
