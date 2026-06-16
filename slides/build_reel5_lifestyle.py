@@ -141,7 +141,7 @@ def make_frame(out_name, src_name, text, colour, max_size, y_frac, darken_top=Fa
 print("Building Reel 5 lifestyle frames...\n")
 
 make_frame("01.jpg", "01_hollywood.jpg",
-           "I DIDN'T START TRADING FOR MONEY.", WHITE, 90, y_frac=0.58, darken_top=True)
+           "I DIDN'T START TRADING FOR MONEY.", WHITE, 90, y_frac=0.30, darken_top=True)
 
 make_frame("02.jpg", "02_car.jpg",
            "I STARTED FOR FREEDOM.", GOLD, 110, y_frac=0.68)
