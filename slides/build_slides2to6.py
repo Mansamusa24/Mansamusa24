@@ -176,13 +176,13 @@ def build_slide4():
     draw_block(d, [
         ("HOW TO TRADE IT RIGHT",     88, WHITE),
         ("A SIMPLE 4 STEP PROCESS",   60, GREY),
-        ("STEP 1  IDENTIFY THE TREND", 60, WHITE),
-        ("Use H4 or Daily first",      44, GREY),
-        ("STEP 2  WAIT FOR SIGNAL",    60, WHITE),
+        ("STEP 1  IDENTIFY THE TREND", 60, GOLD),
+        ("Use 4 Hour or Daily first",  44, GREY),
+        ("STEP 2  WAIT FOR SIGNAL",    60, GOLD),
         ("BOS or Change of Character on 15m", 40, GREY),
-        ("STEP 3  ENTER ON RETEST",    60, WHITE),
+        ("STEP 3  ENTER ON RETEST",    60, GOLD),
         ("Wait for price to retest broken level", 40, GREY),
-        ("STEP 4  MANAGE YOUR RISK",   60, WHITE),
+        ("STEP 4  MANAGE YOUR RISK",   60, GOLD),
         ("SL below swing low. Target next key level", 38, GREY),
     ], int(H * 0.28), ly - 20)
     return bg
