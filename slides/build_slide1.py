@@ -15,7 +15,7 @@ W, H      = 1080, 1080
 OUT_DIR   = os.path.join(os.path.dirname(__file__), "market-structure", "output")
 BG_PATH   = os.path.join(os.path.dirname(__file__), "bg_slide1.jpg")
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "titus_logo_transparent.png")
-FONT_DIR  = "/usr/share/fonts/truetype"
+FONT_DIR  = os.path.join(os.path.dirname(__file__), "fonts")
 
 GOLD  = (240, 180,  41)
 WHITE = (255, 255, 255)
@@ -24,7 +24,7 @@ def load(path, size):
     try:    return ImageFont.truetype(path, size)
     except: return ImageFont.load_default()
 
-BOLD = f"{FONT_DIR}/liberation/LiberationSans-Bold.ttf"
+BOLD = f"{FONT_DIR}/BigShoulders-Bold.ttf"
 
 F_HUGE  = load(BOLD, 112)
 F_LARGE = load(BOLD, 96)
@@ -53,7 +53,7 @@ draw  = ImageDraw.Draw(slide)
 # ── 2. Dark gradient overlay — bottom 60% ────────────────────────────────────
 overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
 od      = ImageDraw.Draw(overlay)
-grad_top = int(H * 0.28)   # gradient starts here
+grad_top = int(H * 0.16)   # gradient starts here
 for y in range(grad_top, H):
     # alpha ramps from 0 → 230 over the gradient zone
     progress = (y - grad_top) / (H - grad_top)

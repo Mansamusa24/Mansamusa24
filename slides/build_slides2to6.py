@@ -15,8 +15,8 @@ OUT_DIR   = os.path.join(os.path.dirname(__file__), "market-structure", "output"
 BG_PATH   = os.path.join(os.path.dirname(__file__), "bg_chart.jpg")
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "titus_logo_transparent.png")
 TG_PATH   = os.path.join(os.path.dirname(__file__), "telegram_logo.png")
-FONT_DIR  = "/usr/share/fonts/truetype"
-BOLD      = f"{FONT_DIR}/liberation/LiberationSans-Bold.ttf"
+FONT_DIR  = os.path.join(os.path.dirname(__file__), "fonts")
+BOLD      = f"{FONT_DIR}/BigShoulders-Bold.ttf"
 
 GOLD  = (240, 180,  41)
 WHITE = (255, 255, 255)
@@ -76,14 +76,15 @@ def make_bg(extra_dark=False):
 
     overlay  = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     od       = ImageDraw.Draw(overlay)
-    darkness = 245 if extra_dark else 215
-    grad_top = int(H * 0.22)
-    for y in range(grad_top, H):
-        p     = (y - grad_top) / (H - grad_top)
-        alpha = int(darkness * min(p * 1.6, 1.0))
-        od.line([(0, y), (W, y)], fill=(0, 0, 0, alpha))
-    for y in range(0, grad_top):
-        alpha = int(80 * (1 - y / grad_top))
+    base     = 195 if extra_dark else 170   # flat darken across whole frame, hides chart price axis
+    extra    = 55                             # additional darkening toward the bottom
+    grad_top = int(H * 0.18)
+    for y in range(H):
+        if y < grad_top:
+            alpha = base
+        else:
+            p     = (y - grad_top) / (H - grad_top)
+            alpha = min(base + int(extra * min(p * 1.4, 1.0)), 250)
         od.line([(0, y), (W, y)], fill=(0, 0, 0, alpha))
 
     return Image.alpha_composite(bg.convert("RGBA"), overlay).convert("RGB")
@@ -120,13 +121,22 @@ def add_bottom(slide, slide_num=None):
 def draw_block(draw, lines, text_top, text_bot):
     """
     lines = [(text, max_font_size, colour), ...]
-    Auto-fits each line, then stacks them vertically centred in [text_top, text_bot].
+    Auto-fits each line by width, then shrinks the whole block proportionally
+    if needed so it always fits vertically in [text_top, text_bot] without
+    overlapping the logo, then stacks them centred.
     """
-    fitted = [(text, fit_font(draw, text, max_size), colour)
-              for text, max_size, colour in lines]
-    total_h = sum(lh(draw, f) for _, f, _ in fitted)
-    avail   = text_bot - text_top
-    y       = text_top + max(0, (avail - total_h) // 2)
+    avail = text_bot - text_top
+    scale = 1.0
+    fitted, total_h = [], 0
+    while True:
+        fitted = [(text, fit_font(draw, text, max(int(max_size * scale), 22)), colour)
+                  for text, max_size, colour in lines]
+        total_h = sum(lh(draw, f) for _, f, _ in fitted)
+        if total_h <= avail or scale <= 0.4:
+            break
+        scale -= 0.05
+
+    y = text_top + max(0, (avail - total_h) // 2)
     for text, font, colour in fitted:
         y = centred(draw, text, font, y, fill=colour)
 
@@ -210,13 +220,11 @@ def build_slide6():
     d   = ImageDraw.Draw(bg)
     draw_block(d, [
         ("IF THIS HELPED YOU",        80, WHITE),
-        ("FOLLOW",                    96, WHITE),
-        ("@TITUSTRADINGNETWORK",       72, GOLD),
+        ("FOLLOW FOR MORE",           90, WHITE),
         ("DAILY SETUPS.",             88, WHITE),
         ("REAL EDUCATION.",           88, WHITE),
         ("NO GATEKEEPING.",           88, GOLD),
-        ("JOIN THE FREE COMMUNITY",   60, WHITE),
-        ("@titus.net",                72, GOLD),
+        ("JOIN THE FREE TELEGRAM",    60, WHITE),
         ("DROP A COMMENT BELOW",      44, GREY),
     ], int(H * 0.25), ly - 20)
     return bg
