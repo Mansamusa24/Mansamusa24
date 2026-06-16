@@ -22,12 +22,12 @@ def load(path, size):
     try:    return ImageFont.truetype(path, size)
     except: return ImageFont.load_default()
 
-F_XL   = load(BOLD, 72)
-F_LG   = load(BOLD, 62)
-F_MD   = load(BOLD, 50)
-F_SM   = load(BOLD, 38)
-F_XS   = load(BOLD, 28)
-F_TINY = load(BOLD, 22)
+F_XL   = load(BOLD, 90)
+F_LG   = load(BOLD, 76)
+F_MD   = load(BOLD, 62)
+F_SM   = load(BOLD, 48)
+F_XS   = load(BOLD, 36)
+F_TINY = load(BOLD, 26)
 
 # ── Shared helpers ─────────────────────────────────────────────────────────────
 
@@ -135,14 +135,14 @@ def build_slide3():
     y = centred(draw, "WHEN PRICE BREAKS A KEY", F_MD, y)
     y = centred(draw, "LEVEL IT IS TELLING YOU", F_MD, y)
     y = mixed(draw, [("SOMETHING IS ", WHITE), ("CHANGING.", GOLD)], F_MD, y)
-    y += 28
+    y += 20
     y = centred(draw, "BULLISH BOS", F_SM, y, GOLD)
     y = centred(draw, "Price breaks above swing high", F_XS, y, GREY)
-    y += 10
+    y += 8
     y = centred(draw, "BEARISH BOS", F_SM, y, GOLD)
     y = centred(draw, "Price breaks below swing low", F_XS, y, GREY)
-    y += 10
-    y = centred(draw, "CHoCH", F_SM, y, GOLD)
+    y += 8
+    y = centred(draw, "CHANGE OF CHARACTER", F_SM, y, GOLD)
     y = centred(draw, "First sign the trend is flipping", F_XS, y, GREY)
 
     add_logo(bg, H - 10)
@@ -165,7 +165,7 @@ def build_slide4():
     y = centred(draw, "Use H4 or Daily timeframe first", F_XS, y, GREY)
     y += 14
     y = mixed(draw, [("STEP 2  ", GOLD), ("WAIT FOR THE SIGNAL", WHITE)], F_SM, y)
-    y = centred(draw, "BOS or CHoCH on 15m or 1H", F_XS, y, GREY)
+    y = centred(draw, "BOS or Change of Character on 15m or 1H", F_XS, y, GREY)
     y += 14
     y = mixed(draw, [("STEP 3  ", GOLD), ("ENTER ON THE RETEST", WHITE)], F_SM, y)
     y = centred(draw, "Wait for price to retest broken level", F_XS, y, GREY)
