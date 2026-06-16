@@ -40,9 +40,9 @@ scale   = max(scale_w, scale_h)          # fill — never letterbox
 new_w   = int(bg.width  * scale)
 new_h   = int(bg.height * scale)
 bg      = bg.resize((new_w, new_h), Image.LANCZOS)
-left    = (new_w - W) // 2
+left    = (new_w - W) // 2 - 200   # shift left to centre steering wheel
 top     = (new_h - H) // 2
-bg      = bg.crop((left, top, left + W, top + H))
+bg      = bg.crop((max(0, left), max(0, top), max(0, left) + W, max(0, top) + H))
 
 slide = bg.copy()
 draw  = ImageDraw.Draw(slide)
