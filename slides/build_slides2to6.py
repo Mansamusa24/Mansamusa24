@@ -8,7 +8,7 @@ Auto-fit fonts so all text stays within Instagram 1080x1350 frame.
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 
-W, H      = 1080, 1350
+W, H      = 1080, 1080
 PAD       = 60
 MAX_W     = W - PAD * 2    # 960px usable width
 OUT_DIR   = os.path.join(os.path.dirname(__file__), "market-structure", "output")
@@ -224,18 +224,18 @@ def build_slide6():
 # ── Generate ───────────────────────────────────────────────────────────────────
 
 slides = [
-    ("titus_carousel_2_structure.png", build_slide2),
-    ("titus_carousel_3_bos.png",       build_slide3),
-    ("titus_carousel_4_entry.png",     build_slide4),
-    ("titus_carousel_5_chart.png",     build_slide5),
-    ("titus_carousel_6_cta.png",       build_slide6),
+    ("titus_carousel_2_structure.jpg", build_slide2),
+    ("titus_carousel_3_bos.jpg",       build_slide3),
+    ("titus_carousel_4_entry.jpg",     build_slide4),
+    ("titus_carousel_5_chart.jpg",     build_slide5),
+    ("titus_carousel_6_cta.jpg",       build_slide6),
 ]
 
 print("Building slides 2-6...\n")
 for fname, builder in slides:
     img  = builder()
     path = os.path.join(OUT_DIR, fname)
-    img.save(path, "PNG")
+    img.save(path, "JPEG", quality=95)
     print(f"  ✓  {fname}")
 
 print(f"\nDone → {OUT_DIR}")

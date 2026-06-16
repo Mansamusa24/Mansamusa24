@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import numpy as np
 import os
 
-W, H      = 1080, 1350
+W, H      = 1080, 1080
 OUT_DIR   = os.path.join(os.path.dirname(__file__), "market-structure", "output")
 BG_PATH   = os.path.join(os.path.dirname(__file__), "bg_slide1.jpg")
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "titus_logo_transparent.png")
@@ -116,7 +116,7 @@ slide.paste(logo, ((W - lw)//2, ly), logo)
 draw = ImageDraw.Draw(slide)
 
 # ── 5. Text block: auto-fit fonts, stack from 38% down to just above logo ────
-text_top = int(H * 0.36)
+text_top = int(H * 0.26)
 text_bot = ly - 16
 
 # Define lines with their preferred max font size
@@ -160,6 +160,6 @@ draw = ImageDraw.Draw(slide)
 draw.text((xs + iw + 10, ty), tg_text, font=tg_font, fill=GOLD)
 
 # ── 5. Save ───────────────────────────────────────────────────────────────────
-out = os.path.join(OUT_DIR, "titus_carousel_1_hook.png")
-slide.save(out, "PNG")
+out = os.path.join(OUT_DIR, "titus_carousel_1_hook.jpg")
+slide.save(out, "JPEG", quality=95)
 print(f"✓ Saved → {out}")
