@@ -26,11 +26,11 @@ def load(path, size):
 
 BOLD = f"{FONT_DIR}/liberation/LiberationSans-Bold.ttf"
 
-F_HUGE  = load(BOLD, 80)
-F_LARGE = load(BOLD, 66)
-F_MED   = load(BOLD, 52)
-F_SMALL = load(BOLD, 32)
-F_TINY  = load(BOLD, 24)
+F_HUGE  = load(BOLD, 112)
+F_LARGE = load(BOLD, 96)
+F_MED   = load(BOLD, 72)
+F_SMALL = load(BOLD, 48)
+F_TINY  = load(BOLD, 30)
 
 # ── 1. Background: correct EXIF rotation, scale to FILL 1080x1350, centre-crop
 from PIL import ImageOps
