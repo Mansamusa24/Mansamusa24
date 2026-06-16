@@ -84,11 +84,14 @@ def add_logo(slide, y_bottom, size=150):
     logo = Image.open(LOGO_PATH).convert("RGBA")
     logo.thumbnail((size, size), Image.LANCZOS)
     lw2, lh2 = logo.size
-    slide.paste(logo, ((W - lw2)//2, y_bottom - lh2 - 20), logo)
+    slide.paste(logo, ((W - lw2)//2, y_bottom - lh2 - 50), logo)
     draw = ImageDraw.Draw(slide)
     handle = "@titustradingnetwork"
-    draw.text(((W - tw(draw, handle, F_TINY))//2, y_bottom - 22),
+    tg     = "Telegram: @titus.net"
+    draw.text(((W - tw(draw, handle, F_TINY))//2, y_bottom - 44),
               handle, font=F_TINY, fill=GREY)
+    draw.text(((W - tw(draw, tg, F_TINY))//2, y_bottom - 18),
+              tg, font=F_TINY, fill=GOLD)
 
 def slide_number(draw, n):
     label = f"{n} / 6"
@@ -214,8 +217,8 @@ def build_slide6():
     y = centred(draw, "REAL EDUCATION.", F_XL, y, WHITE)
     y = centred(draw, "NO GATEKEEPING.", F_XL, y, GOLD)
     y += 28
-    y = centred(draw, "FREE COMMUNITY", F_SM, y, GOLD)
-    y = centred(draw, "t.me/titus_net", F_MD, y, WHITE)
+    y = centred(draw, "JOIN THE FREE COMMUNITY", F_SM, y, GOLD)
+    y = centred(draw, "@titus.net", F_MD, y, WHITE)
     y += 20
     y = centred(draw, "DROP A 📊 IN THE COMMENTS", F_XS, y, GREY)
 
