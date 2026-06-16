@@ -26,11 +26,11 @@ def load(path, size):
 
 BOLD = f"{FONT_DIR}/liberation/LiberationSans-Bold.ttf"
 
-F_HUGE  = load(BOLD, 90)
-F_LARGE = load(BOLD, 78)
-F_MED   = load(BOLD, 60)
-F_SMALL = load(BOLD, 36)
-F_TINY  = load(BOLD, 26)
+F_HUGE  = load(BOLD, 80)
+F_LARGE = load(BOLD, 66)
+F_MED   = load(BOLD, 52)
+F_SMALL = load(BOLD, 32)
+F_TINY  = load(BOLD, 24)
 
 # ── 1. Background: crop & resize to 1080x1350 ────────────────────────────────
 bg = Image.open(BG_PATH).convert("RGB")
@@ -86,36 +86,47 @@ def draw_centred(draw, text, font, y, fill=WHITE):
     draw.text(((W - tw) // 2, y), text, font=font, fill=fill)
     return y + draw.textbbox((0,0), text, font=font)[3] + 6
 
-# Headline lines — matching @asianriches large bold style
-text_top = int(H * 0.42)
-y = text_top
-
-y = draw_centred(draw, "BEFORE YOU PLACE", F_LARGE, y)
-y = draw_centred(draw, "ANOTHER TRADE —", F_LARGE, y)
-
-# Gold highlight line
-y = draw_line_mixed(draw, [
-    ("MASTER ", WHITE),
-    ("MARKET STRUCTURE.", GOLD),
-], y, F_LARGE) + 6
-
-y = draw_centred(draw, "HERE'S WHAT THE", F_MED, y)
-y = draw_centred(draw, "PROS DON'T TEACH:", F_MED, y + 4)
-
-# Swipe cue
-y += 24
-y = draw_line_mixed(draw, [
-    ("SWIPE TO LEARN  ", WHITE),
-    ("→", GOLD),
-], y, F_SMALL)
-
 # ── 4. Logo bottom centre ─────────────────────────────────────────────────────
 logo = Image.open(LOGO_PATH).convert("RGBA")
-logo.thumbnail((200, 200), Image.LANCZOS)
+logo.thumbnail((160, 160), Image.LANCZOS)
 lw, lh = logo.size
 lx     = (W - lw) // 2
-ly     = H - lh - 30
+ly     = H - lh - 40
 slide.paste(logo, (lx, ly), logo)
+
+# Calculate available text height: from 42% down to just above logo
+text_top  = int(H * 0.40)
+text_bot  = ly - 20   # stop just above logo
+draw = ImageDraw.Draw(slide)
+
+# Measure total text block height so we can centre it
+line_gap = 8
+lines = [
+    ("BEFORE YOU PLACE", F_LARGE, WHITE),
+    ("ANOTHER TRADE —",  F_LARGE, WHITE),
+    ("MASTER MARKET",    F_LARGE, WHITE),   # gold handled separately
+    ("STRUCTURE.",       F_LARGE, GOLD),
+    ("HERE'S WHAT THE",  F_MED,   WHITE),
+    ("PROS DON'T TEACH:", F_MED,  WHITE),
+]
+
+def line_h(font):
+    return draw.textbbox((0,0), "A", font=font)[3] + line_gap
+
+total_h = (line_h(F_LARGE)*4 + line_h(F_MED)*2 +
+           line_h(F_SMALL))   # swipe cue
+avail   = text_bot - text_top
+y_start = text_top + max(0, (avail - total_h) // 2)
+
+y = y_start
+y = draw_centred(draw, "BEFORE YOU PLACE",  F_LARGE, y)
+y = draw_centred(draw, "ANOTHER TRADE —",   F_LARGE, y)
+y = draw_line_mixed(draw, [("MASTER ", WHITE), ("MARKET", GOLD)], y, F_LARGE) + line_gap
+y = draw_centred(draw, "STRUCTURE.",  F_LARGE, y, fill=GOLD)
+y = draw_centred(draw, "HERE'S WHAT THE PROS", F_MED, y + 4)
+y = draw_centred(draw, "DON'T TEACH:", F_MED, y)
+y += 18
+y = draw_line_mixed(draw, [("SWIPE TO LEARN  ", WHITE), ("→", GOLD)], y, F_SMALL)
 
 # Re-draw handle under logo
 draw  = ImageDraw.Draw(slide)
