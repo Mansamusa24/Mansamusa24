@@ -32,20 +32,17 @@ F_MED   = load(BOLD, 52)
 F_SMALL = load(BOLD, 32)
 F_TINY  = load(BOLD, 24)
 
-# ── 1. Background: crop & resize to 1080x1350 ────────────────────────────────
-bg = Image.open(BG_PATH).convert("RGB")
-# Scale to fill width, crop height from centre-top
-scale  = W / bg.width
-new_h  = int(bg.height * scale)
-bg     = bg.resize((W, new_h), Image.LANCZOS)
-# Crop to 1350 — take top portion (keep the dramatic scene)
-if new_h >= H:
-    bg = bg.crop((0, 0, W, H))
-else:
-    # Pad bottom with black if too short
-    canvas = Image.new("RGB", (W, H), (0, 0, 0))
-    canvas.paste(bg, (0, 0))
-    bg = canvas
+# ── 1. Background: scale to FILL 1080x1350, centre-crop ─────────────────────
+bg      = Image.open(BG_PATH).convert("RGB")
+scale_w = W / bg.width
+scale_h = H / bg.height
+scale   = max(scale_w, scale_h)          # fill — never letterbox
+new_w   = int(bg.width  * scale)
+new_h   = int(bg.height * scale)
+bg      = bg.resize((new_w, new_h), Image.LANCZOS)
+left    = (new_w - W) // 2
+top     = (new_h - H) // 2
+bg      = bg.crop((left, top, left + W, top + H))
 
 slide = bg.copy()
 draw  = ImageDraw.Draw(slide)
