@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """
 Build slides 2-6 using TradingView chart as background.
-Same @asianriches style: dark gradient overlay, bold caps, gold highlights, logo.
+@asianriches style: dark gradient overlay, bold caps, gold highlights, logo.
+Auto-fit fonts so all text stays within Instagram 1080x1350 frame.
 """
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 
 W, H      = 1080, 1350
+PAD       = 60
+MAX_W     = W - PAD * 2    # 960px usable width
 OUT_DIR   = os.path.join(os.path.dirname(__file__), "market-structure", "output")
 BG_PATH   = os.path.join(os.path.dirname(__file__), "bg_chart.jpg")
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "titus_logo_transparent.png")
+TG_PATH   = os.path.join(os.path.dirname(__file__), "telegram_logo.png")
 FONT_DIR  = "/usr/share/fonts/truetype"
 BOLD      = f"{FONT_DIR}/liberation/LiberationSans-Bold.ttf"
 
@@ -18,53 +22,22 @@ GOLD  = (240, 180,  41)
 WHITE = (255, 255, 255)
 GREY  = (200, 200, 200)
 
-def load(path, size):
-    try:    return ImageFont.truetype(path, size)
+def load(size):
+    try:    return ImageFont.truetype(BOLD, size)
     except: return ImageFont.load_default()
 
-F_XL   = load(BOLD, 90)
-F_LG   = load(BOLD, 76)
-F_MD   = load(BOLD, 62)
-F_SM   = load(BOLD, 48)
-F_XS   = load(BOLD, 36)
-F_TINY = load(BOLD, 26)
-
-# ── Shared helpers ─────────────────────────────────────────────────────────────
-
-def make_bg(extra_dark=False):
-    """Return cropped, resized chart background."""
-    bg    = Image.open(BG_PATH).convert("RGB")
-    scale = W / bg.width
-    new_h = int(bg.height * scale)
-    bg    = bg.resize((W, new_h), Image.LANCZOS)
-    if new_h >= H:
-        bg = bg.crop((0, 0, W, H))
-    else:
-        canvas = Image.new("RGB", (W, H), (5, 8, 20))
-        canvas.paste(bg, (0, 0))
-        bg = canvas
-
-    overlay  = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    od       = ImageDraw.Draw(overlay)
-    darkness = 240 if extra_dark else 210
-    grad_top = int(H * 0.22)
-    for y in range(grad_top, H):
-        p     = (y - grad_top) / (H - grad_top)
-        alpha = int(darkness * min(p * 1.5, 1.0))
-        od.line([(0, y), (W, y)], fill=(0, 0, 0, alpha))
-
-    # Also darken the top a little so text area is readable
-    for y in range(0, grad_top):
-        p     = 1 - (y / grad_top)
-        alpha = int(80 * p)
-        od.line([(0, y), (W, y)], fill=(0, 0, 0, alpha))
-
-    return Image.alpha_composite(bg.convert("RGBA"), overlay).convert("RGB")
+def fit_font(draw, text, max_size=90, min_size=32):
+    """Return largest font where text fits within MAX_W."""
+    for size in range(max_size, min_size - 1, -2):
+        f = load(size)
+        if draw.textbbox((0,0), text, font=f)[2] <= MAX_W:
+            return f
+    return load(min_size)
 
 def tw(draw, text, font):
     return draw.textbbox((0,0), text, font=font)[2]
 
-def lh(draw, font, gap=6):
+def lh(draw, font, gap=10):
     return draw.textbbox((0,0), "A", font=font)[3] + gap
 
 def centred(draw, text, font, y, fill=WHITE):
@@ -72,172 +45,174 @@ def centred(draw, text, font, y, fill=WHITE):
     draw.text((x, y), text, font=font, fill=fill)
     return y + lh(draw, font)
 
-def mixed(draw, segments, font, y, gap=6):
+def mixed(draw, segments, font, y):
     total = sum(tw(draw, t, font) for t, _ in segments)
     x     = (W - total) // 2
     for text, colour in segments:
         draw.text((x, y), text, font=font, fill=colour)
         x += tw(draw, text, font)
-    return y + lh(draw, font, gap)
+    return y + lh(draw, font)
 
-TG_LOGO = Image.open(os.path.join(os.path.dirname(__file__), "telegram_logo.png")).convert("RGBA")
+def make_bg(extra_dark=False):
+    bg      = Image.open(BG_PATH).convert("RGB")
+    scale_w = W / bg.width
+    scale_h = H / bg.height
+    scale   = max(scale_w, scale_h)
+    new_w   = int(bg.width  * scale)
+    new_h   = int(bg.height * scale)
+    bg      = bg.resize((new_w, new_h), Image.LANCZOS)
+    left    = (new_w - W) // 2
+    top     = (new_h - H) // 2
+    bg      = bg.crop((left, top, left + W, top + H))
 
-def add_logo(slide, y_bottom, size=150):
-    # Brand logo
+    overlay  = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    od       = ImageDraw.Draw(overlay)
+    darkness = 245 if extra_dark else 215
+    grad_top = int(H * 0.22)
+    for y in range(grad_top, H):
+        p     = (y - grad_top) / (H - grad_top)
+        alpha = int(darkness * min(p * 1.6, 1.0))
+        od.line([(0, y), (W, y)], fill=(0, 0, 0, alpha))
+    for y in range(0, grad_top):
+        alpha = int(80 * (1 - y / grad_top))
+        od.line([(0, y), (W, y)], fill=(0, 0, 0, alpha))
+
+    return Image.alpha_composite(bg.convert("RGBA"), overlay).convert("RGB")
+
+def add_bottom(slide, slide_num=None):
+    """Add logo, Telegram handle and optional slide number."""
     logo = Image.open(LOGO_PATH).convert("RGBA")
-    logo.thumbnail((size, size), Image.LANCZOS)
+    logo.thumbnail((150, 150), Image.LANCZOS)
     lw2, lh2 = logo.size
-    slide.paste(logo, ((W - lw2)//2, y_bottom - lh2 - 50), logo)
+    ly        = H - lh2 - 70
+    slide.paste(logo, ((W - lw2)//2, ly), logo)
 
-    # Telegram icon + @titus.net
-    tg_icon = TG_LOGO.copy()
-    tg_icon.thumbnail((44, 44), Image.LANCZOS)
+    tg_icon = Image.open(TG_PATH).convert("RGBA")
+    tg_icon.thumbnail((40, 40), Image.LANCZOS)
     iw, ih  = tg_icon.size
-
     draw    = ImageDraw.Draw(slide)
+    tg_font = load(30)
     tg_text = "@titus.net"
-    txt_w   = tw(draw, tg_text, F_XS)
-    gap     = 10
-    total   = iw + gap + txt_w
-    x_start = (W - total) // 2
-    ty      = y_bottom - 36
+    tgw     = tw(draw, tg_text, tg_font)
+    total   = iw + 10 + tgw
+    xs      = (W - total) // 2
+    ty      = H - 40
+    slide.paste(tg_icon, (xs, ty - ih//2 + 8), tg_icon)
+    draw = ImageDraw.Draw(slide)
+    draw.text((xs + iw + 10, ty - 2), tg_text, font=tg_font, fill=GOLD)
 
-    slide.paste(tg_icon, (x_start, ty - ih//2 + 10), tg_icon)
-    draw.text((x_start + iw + gap, ty), tg_text, font=F_XS, fill=GOLD)
+    if slide_num:
+        label = f"{slide_num} / 6"
+        sf    = load(28)
+        draw.text((W - PAD - tw(draw, label, sf), 44), label, font=sf, fill=GREY)
 
-def slide_number(draw, n):
-    label = f"{n} / 6"
-    draw.text((W - tw(draw, label, F_TINY) - 40, 40), label, font=F_TINY, fill=GREY)
+    return ly   # return top of logo so text stays above it
 
-# ── Slide 2: What is Market Structure ─────────────────────────────────────────
+def draw_block(draw, lines, text_top, text_bot):
+    """
+    lines = [(text, max_font_size, colour), ...]
+    Auto-fits each line, then stacks them vertically centred in [text_top, text_bot].
+    """
+    fitted = [(text, fit_font(draw, text, max_size), colour)
+              for text, max_size, colour in lines]
+    total_h = sum(lh(draw, f) for _, f, _ in fitted)
+    avail   = text_bot - text_top
+    y       = text_top + max(0, (avail - total_h) // 2)
+    for text, font, colour in fitted:
+        y = centred(draw, text, font, y, fill=colour)
+
+# ── Slide builders ─────────────────────────────────────────────────────────────
 
 def build_slide2():
-    bg   = make_bg()
-    draw = ImageDraw.Draw(bg)
-    slide_number(draw, 2)
-
-    y = int(H * 0.33)
-    y = mixed(draw, [("WHAT IS ", WHITE), ("MARKET", GOLD)], F_XL, y) + 4
-    y = centred(draw, "STRUCTURE?", F_XL, y, GOLD)
-    y += 20
-    y = centred(draw, "THE FOUNDATION EVERY", F_MD, y)
-    y = centred(draw, "PROFITABLE TRADE IS", F_MD, y)
-    y = centred(draw, "BUILT ON.", F_MD, y)
-    y += 24
-    y = centred(draw, "UPTREND", F_SM, y, GOLD)
-    y = centred(draw, "Higher Highs and Higher Lows", F_XS, y, GREY)
-    y += 10
-    y = centred(draw, "DOWNTREND", F_SM, y, GOLD)
-    y = centred(draw, "Lower Highs and Lower Lows", F_XS, y, GREY)
-    y += 10
-    y = centred(draw, "RANGING", F_SM, y, GOLD)
-    y = centred(draw, "Price stuck between the same levels", F_XS, y, GREY)
-
-    add_logo(bg, H - 10)
+    bg  = make_bg()
+    ly  = add_bottom(bg, slide_num=2)
+    d   = ImageDraw.Draw(bg)
+    draw_block(d, [
+        ("WHAT IS",             88, WHITE),
+        ("MARKET STRUCTURE?",   88, GOLD),
+        ("THE FOUNDATION EVERY", 72, WHITE),
+        ("PROFITABLE TRADE",    72, WHITE),
+        ("IS BUILT ON.",        72, WHITE),
+        ("UPTREND",             60, GOLD),
+        ("Higher Highs and Higher Lows", 44, GREY),
+        ("DOWNTREND",           60, GOLD),
+        ("Lower Highs and Lower Lows",   44, GREY),
+        ("RANGING",             60, GOLD),
+        ("Price stuck between the same levels", 40, GREY),
+    ], int(H * 0.28), ly - 20)
     return bg
-
-# ── Slide 3: Break of Structure ───────────────────────────────────────────────
 
 def build_slide3():
-    bg   = make_bg()
-    draw = ImageDraw.Draw(bg)
-    slide_number(draw, 3)
-
-    y = int(H * 0.33)
-    y = centred(draw, "BREAK OF", F_XL, y)
-    y = mixed(draw, [("STRUCTURE ", WHITE), ("(BOS)", GOLD)], F_XL, y) + 4
-    y += 18
-    y = centred(draw, "WHEN PRICE BREAKS A KEY", F_MD, y)
-    y = centred(draw, "LEVEL IT IS TELLING YOU", F_MD, y)
-    y = mixed(draw, [("SOMETHING IS ", WHITE), ("CHANGING.", GOLD)], F_MD, y)
-    y += 20
-    y = centred(draw, "BULLISH BOS", F_SM, y, GOLD)
-    y = centred(draw, "Price breaks above swing high", F_XS, y, GREY)
-    y += 8
-    y = centred(draw, "BEARISH BOS", F_SM, y, GOLD)
-    y = centred(draw, "Price breaks below swing low", F_XS, y, GREY)
-    y += 8
-    y = centred(draw, "CHANGE OF CHARACTER", F_SM, y, GOLD)
-    y = centred(draw, "First sign the trend is flipping", F_XS, y, GREY)
-
-    add_logo(bg, H - 10)
+    bg  = make_bg()
+    ly  = add_bottom(bg, slide_num=3)
+    d   = ImageDraw.Draw(bg)
+    draw_block(d, [
+        ("BREAK OF STRUCTURE",        88, WHITE),
+        ("WHEN PRICE BREAKS A KEY",   72, WHITE),
+        ("LEVEL IT IS TELLING YOU",   72, WHITE),
+        ("SOMETHING IS CHANGING.",    72, GOLD),
+        ("BULLISH BOS",               60, GOLD),
+        ("Price breaks above swing high", 44, GREY),
+        ("BEARISH BOS",               60, GOLD),
+        ("Price breaks below swing low",  44, GREY),
+        ("CHANGE OF CHARACTER",       60, GOLD),
+        ("First sign the trend is flipping", 40, GREY),
+    ], int(H * 0.28), ly - 20)
     return bg
-
-# ── Slide 4: How To Trade It ──────────────────────────────────────────────────
 
 def build_slide4():
-    bg   = make_bg()
-    draw = ImageDraw.Draw(bg)
-    slide_number(draw, 4)
-
-    y = int(H * 0.33)
-    y = centred(draw, "HOW TO", F_XL, y)
-    y = mixed(draw, [("TRADE IT ", WHITE), ("RIGHT", GOLD)], F_XL, y) + 4
-    y += 18
-    y = centred(draw, "A SIMPLE 4 STEP PROCESS", F_MD, y, GREY)
-    y += 24
-    y = mixed(draw, [("STEP 1  ", GOLD), ("IDENTIFY THE TREND", WHITE)], F_SM, y)
-    y = centred(draw, "Use H4 or Daily timeframe first", F_XS, y, GREY)
-    y += 14
-    y = mixed(draw, [("STEP 2  ", GOLD), ("WAIT FOR THE SIGNAL", WHITE)], F_SM, y)
-    y = centred(draw, "BOS or Change of Character on 15m or 1H", F_XS, y, GREY)
-    y += 14
-    y = mixed(draw, [("STEP 3  ", GOLD), ("ENTER ON THE RETEST", WHITE)], F_SM, y)
-    y = centred(draw, "Wait for price to retest broken level", F_XS, y, GREY)
-    y += 14
-    y = mixed(draw, [("STEP 4  ", GOLD), ("MANAGE YOUR RISK", WHITE)], F_SM, y)
-    y = centred(draw, "SL below swing low. Target next key level", F_XS, y, GREY)
-
-    add_logo(bg, H - 10)
+    bg  = make_bg()
+    ly  = add_bottom(bg, slide_num=4)
+    d   = ImageDraw.Draw(bg)
+    draw_block(d, [
+        ("HOW TO TRADE IT RIGHT",     88, WHITE),
+        ("A SIMPLE 4 STEP PROCESS",   60, GREY),
+        ("STEP 1  IDENTIFY THE TREND", 60, WHITE),
+        ("Use H4 or Daily first",      44, GREY),
+        ("STEP 2  WAIT FOR SIGNAL",    60, WHITE),
+        ("BOS or Change of Character on 15m", 40, GREY),
+        ("STEP 3  ENTER ON RETEST",    60, WHITE),
+        ("Wait for price to retest broken level", 40, GREY),
+        ("STEP 4  MANAGE YOUR RISK",   60, WHITE),
+        ("SL below swing low. Target next key level", 38, GREY),
+    ], int(H * 0.28), ly - 20)
     return bg
-
-# ── Slide 5: Chart Breakdown ──────────────────────────────────────────────────
 
 def build_slide5():
-    bg   = make_bg(extra_dark=True)
-    draw = ImageDraw.Draw(bg)
-    slide_number(draw, 5)
-
-    y = int(H * 0.35)
-    y = centred(draw, "THIS IS WHAT A", F_LG, y)
-    y = mixed(draw, [("PERFECT ", WHITE), ("ENTRY", GOLD)], F_XL, y) + 4
-    y = centred(draw, "LOOKS LIKE ON A CHART.", F_LG, y)
-    y += 24
-    y = centred(draw, "BOS CONFIRMED ON H1", F_SM, y, GOLD)
-    y = centred(draw, "Price retested broken structure", F_XS, y, GREY)
-    y += 14
-    y = centred(draw, "ENTRY ZONE FORMED", F_SM, y, GOLD)
-    y = centred(draw, "Clean low risk entry with tight SL", F_XS, y, GREY)
-    y += 14
-    y = centred(draw, "TARGET HIT", F_SM, y, GOLD)
-    y = centred(draw, "Next key level taken out", F_XS, y, GREY)
-
-    add_logo(bg, H - 10)
+    bg  = make_bg(extra_dark=True)
+    ly  = add_bottom(bg, slide_num=5)
+    d   = ImageDraw.Draw(bg)
+    draw_block(d, [
+        ("THIS IS WHAT A",            88, WHITE),
+        ("PERFECT ENTRY",             96, GOLD),
+        ("LOOKS LIKE ON A CHART.",    80, WHITE),
+        ("BOS CONFIRMED ON H1",       60, GOLD),
+        ("Price retested broken structure", 44, GREY),
+        ("ENTRY ZONE FORMED",         60, GOLD),
+        ("Clean low risk entry with tight SL", 40, GREY),
+        ("TARGET HIT",                60, GOLD),
+        ("Next key level taken out",  44, GREY),
+    ], int(H * 0.28), ly - 20)
     return bg
-
-# ── Slide 6: CTA ──────────────────────────────────────────────────────────────
 
 def build_slide6():
-    bg   = make_bg(extra_dark=True)
-    draw = ImageDraw.Draw(bg)
-
-    y = int(H * 0.30)
-    y = centred(draw, "IF THIS HELPED YOU", F_LG, y)
-    y = mixed(draw, [("FOLLOW ", WHITE), ("@TITUSTRADINGNETWORK", GOLD)], F_MD, y) + 4
-    y += 16
-    y = centred(draw, "DAILY SETUPS.", F_XL, y, WHITE)
-    y = centred(draw, "REAL EDUCATION.", F_XL, y, WHITE)
-    y = centred(draw, "NO GATEKEEPING.", F_XL, y, GOLD)
-    y += 28
-    y = centred(draw, "JOIN THE FREE COMMUNITY", F_SM, y, GOLD)
-    y = centred(draw, "@titus.net", F_MD, y, WHITE)
-    y += 20
-    y = centred(draw, "DROP A 📊 IN THE COMMENTS", F_XS, y, GREY)
-
-    add_logo(bg, H - 10)
+    bg  = make_bg(extra_dark=True)
+    ly  = add_bottom(bg)
+    d   = ImageDraw.Draw(bg)
+    draw_block(d, [
+        ("IF THIS HELPED YOU",        80, WHITE),
+        ("FOLLOW",                    96, WHITE),
+        ("@TITUSTRADINGNETWORK",       72, GOLD),
+        ("DAILY SETUPS.",             88, WHITE),
+        ("REAL EDUCATION.",           88, WHITE),
+        ("NO GATEKEEPING.",           88, GOLD),
+        ("JOIN THE FREE COMMUNITY",   60, WHITE),
+        ("@titus.net",                72, GOLD),
+        ("DROP A COMMENT BELOW",      44, GREY),
+    ], int(H * 0.25), ly - 20)
     return bg
 
-# ── Generate all ───────────────────────────────────────────────────────────────
+# ── Generate ───────────────────────────────────────────────────────────────────
 
 slides = [
     ("titus_carousel_2_structure.png", build_slide2),
@@ -254,4 +229,4 @@ for fname, builder in slides:
     img.save(path, "PNG")
     print(f"  ✓  {fname}")
 
-print(f"\nDone. Saved to {OUT_DIR}")
+print(f"\nDone → {OUT_DIR}")
