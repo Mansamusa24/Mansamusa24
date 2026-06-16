@@ -49,13 +49,6 @@ def wrap_text(draw, text, font, max_w):
         lines.append(cur)
     return lines
 
-def bold_text(draw, x, y, text, font, fill, stroke=3):
-    for dx in range(-stroke, stroke + 1):
-        for dy in range(-stroke, stroke + 1):
-            if dx != 0 or dy != 0:
-                draw.text((x + dx, y + dy), text, font=font, fill=(0, 0, 0, 255))
-    draw.text((x, y), text, font=font, fill=fill)
-
 def make_overlay(filename, text, colour, max_size, y_frac):
     img  = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
@@ -66,10 +59,26 @@ def make_overlay(filename, text, colour, max_size, y_frac):
     lh_single = draw.textbbox((0, 0), "A", font=font)[3] + 14
     total_h   = lh_single * len(lines)
     y         = int(H * y_frac) - total_h // 2
+    max_line_w = max(tw(draw, line, font) for line in lines)
+
+    # Dark scrim bar behind the text so it stays legible over any footage,
+    # no hard outline needed.
+    pad_x, pad_y = 50, 34
+    box = [
+        (W - max_line_w) // 2 - pad_x,
+        y - pad_y,
+        (W + max_line_w) // 2 + pad_x,
+        y + total_h + pad_y - 14,
+    ]
+    draw.rounded_rectangle(box, radius=20, fill=(8, 9, 12, 165))
+
+    rule_w = 60
+    rule_x = (W - rule_w) // 2
+    draw.rectangle([rule_x, box[1] + 14, rule_x + rule_w, box[1] + 17], fill=GOLD)
 
     for line in lines:
         x = (W - tw(draw, line, font)) // 2
-        bold_text(draw, x, y, line, font, colour)
+        draw.text((x, y), line, font=font, fill=colour)
         y += lh_single
 
     out = os.path.join(OUT_DIR, filename)

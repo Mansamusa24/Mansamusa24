@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
 Build full-screen stat cards for Reel 4 (Stat Shock Reel).
-Each card is a complete 1080x1920 frame (dark chart backdrop + bold text)
-ready to drop straight into CapCut as a slideshow, no recording required.
+Each card is a complete 1080x1920 frame (dark vignette backdrop + clean
+shadowed text, no hard outline) ready to drop straight into CapCut as a
+slideshow, no recording required.
 """
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import os
 
 W, H     = 1080, 1920
 OUT_DIR  = os.path.join(os.path.dirname(__file__), "reel4_stat_shock")
-BG_PATH  = os.path.join(os.path.dirname(__file__), "bg_chart.jpg")
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "titus_logo_transparent.png")
 TG_PATH   = os.path.join(os.path.dirname(__file__), "telegram_logo.png")
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -52,12 +52,14 @@ def wrap_text(draw, text, font, max_w):
         lines.append(cur)
     return lines
 
-def bold_text(draw, x, y, text, font, fill, stroke=3):
-    for dx in range(-stroke, stroke + 1):
-        for dy in range(-stroke, stroke + 1):
-            if dx != 0 or dy != 0:
-                draw.text((x + dx, y + dy), text, font=font, fill=(0, 0, 0))
-    draw.text((x, y), text, font=font, fill=fill)
+def shadow_text(img, x, y, text, font, fill):
+    """Soft drop shadow instead of a hard meme-style outline."""
+    shadow = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shadow)
+    sd.text((x + 3, y + 6), text, font=font, fill=(0, 0, 0, 150))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(7))
+    img.paste(Image.alpha_composite(img.convert("RGBA"), shadow).convert("RGB"), (0, 0))
+    ImageDraw.Draw(img).text((x, y), text, font=font, fill=fill)
 
 def make_bg():
     """Clean dark vignette background, no screenshot chrome, pure statement-card feel."""
@@ -97,13 +99,16 @@ def make_card(filename, text, colour, max_size=140, branding=False):
 
     font  = fit_font(draw, text, max_size)
     lines = wrap_text(draw, text, font, MAX_W)
-    line_h = draw.textbbox((0, 0), "A", font=font)[3] + 20
+    line_h = draw.textbbox((0, 0), "A", font=font)[3] + 24
     total_h = line_h * len(lines)
-    y = (H - total_h) // 2
+    y = int(H * 0.44) - total_h // 2
+
+    rule_x = (W - 70) // 2
+    draw.rectangle([rule_x, y - 50, rule_x + 70, y - 47], fill=GOLD)
 
     for line in lines:
         x = (W - tw(draw, line, font)) // 2
-        bold_text(draw, x, y, line, font, colour)
+        shadow_text(img, x, y, line, font, colour)
         y += line_h
 
     if branding:

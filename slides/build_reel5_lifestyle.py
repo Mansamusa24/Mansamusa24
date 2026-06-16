@@ -5,7 +5,7 @@ Uses the user's own photos as backgrounds with bold Anton caption text,
 ready to drop straight into CapCut as a slideshow.
 """
 
-from PIL import Image, ImageDraw, ImageFont, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageOps, ImageFilter
 import os
 
 W, H      = 1080, 1920
@@ -51,12 +51,14 @@ def wrap_text(draw, text, font, max_w):
         lines.append(cur)
     return lines
 
-def bold_text(draw, x, y, text, font, fill, stroke=3):
-    for dx in range(-stroke, stroke + 1):
-        for dy in range(-stroke, stroke + 1):
-            if dx != 0 or dy != 0:
-                draw.text((x + dx, y + dy), text, font=font, fill=(0, 0, 0))
-    draw.text((x, y), text, font=font, fill=fill)
+def shadow_text(img, x, y, text, font, fill):
+    """Soft drop shadow instead of a hard meme-style outline."""
+    shadow = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shadow)
+    sd.text((x + 3, y + 6), text, font=font, fill=(0, 0, 0, 160))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(7))
+    img.paste(Image.alpha_composite(img.convert("RGBA"), shadow).convert("RGB"), (0, 0))
+    ImageDraw.Draw(img).text((x, y), text, font=font, fill=fill)
 
 def make_bg(filename, darken_top=False):
     """Fill-crop the source photo to 1080x1920, then darken for legibility."""
@@ -112,9 +114,12 @@ def make_frame(out_name, src_name, text, colour, max_size, y_frac, darken_top=Fa
     total_h = line_h * len(lines)
     y = int(H * y_frac) - total_h // 2
 
+    rule_x = (W - 70) // 2
+    draw.rectangle([rule_x, y - 36, rule_x + 70, y - 33], fill=GOLD)
+
     for line in lines:
         x = (W - tw(draw, line, font)) // 2
-        bold_text(draw, x, y, line, font, colour)
+        shadow_text(img, x, y, line, font, colour)
         y += line_h
 
     if branding:
