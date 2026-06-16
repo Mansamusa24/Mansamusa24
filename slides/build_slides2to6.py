@@ -80,18 +80,30 @@ def mixed(draw, segments, font, y, gap=6):
         x += tw(draw, text, font)
     return y + lh(draw, font, gap)
 
+TG_LOGO = Image.open(os.path.join(os.path.dirname(__file__), "telegram_logo.png")).convert("RGBA")
+
 def add_logo(slide, y_bottom, size=150):
+    # Brand logo
     logo = Image.open(LOGO_PATH).convert("RGBA")
     logo.thumbnail((size, size), Image.LANCZOS)
     lw2, lh2 = logo.size
     slide.paste(logo, ((W - lw2)//2, y_bottom - lh2 - 50), logo)
-    draw = ImageDraw.Draw(slide)
-    handle = "@titustradingnetwork"
-    tg     = "Telegram: @titus.net"
-    draw.text(((W - tw(draw, handle, F_TINY))//2, y_bottom - 44),
-              handle, font=F_TINY, fill=GREY)
-    draw.text(((W - tw(draw, tg, F_TINY))//2, y_bottom - 18),
-              tg, font=F_TINY, fill=GOLD)
+
+    # Telegram icon + @titus.net
+    tg_icon = TG_LOGO.copy()
+    tg_icon.thumbnail((44, 44), Image.LANCZOS)
+    iw, ih  = tg_icon.size
+
+    draw    = ImageDraw.Draw(slide)
+    tg_text = "@titus.net"
+    txt_w   = tw(draw, tg_text, F_XS)
+    gap     = 10
+    total   = iw + gap + txt_w
+    x_start = (W - total) // 2
+    ty      = y_bottom - 36
+
+    slide.paste(tg_icon, (x_start, ty - ih//2 + 10), tg_icon)
+    draw.text((x_start + iw + gap, ty), tg_text, font=F_XS, fill=GOLD)
 
 def slide_number(draw, n):
     label = f"{n} / 6"

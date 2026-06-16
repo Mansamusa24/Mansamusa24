@@ -128,13 +128,23 @@ y = draw_centred(draw, "TALK ABOUT:", F_MED, y)
 y += 18
 y = draw_line_mixed(draw, [("SWIPE TO LEARN  ", WHITE), ("→", GOLD)], y, F_SMALL)
 
-# Handle + Telegram under logo
-draw   = ImageDraw.Draw(slide)
-handle = "@titustradingnetwork"
-tg     = "Telegram: @titus.net"
-GREY2  = (180, 180, 180)
-draw.text(((W - text_w(draw, handle, F_TINY)) // 2, H - 44), handle, font=F_TINY, fill=GREY2)
-draw.text(((W - text_w(draw, tg,     F_TINY)) // 2, H - 18), tg,     font=F_TINY, fill=(240, 180, 41))
+# Telegram logo + @titus.net under brand logo
+from PIL import Image as _Img
+tg_logo = _Img.open(os.path.join(os.path.dirname(__file__), "telegram_logo.png")).convert("RGBA")
+tg_logo.thumbnail((44, 44), _Img.LANCZOS)
+iw, ih  = tg_logo.size
+
+draw    = ImageDraw.Draw(slide)
+tg_text = "@titus.net"
+txt_w   = text_w(draw, tg_text, F_SMALL)
+gap     = 10
+total   = iw + gap + txt_w
+x_start = (W - total) // 2
+ty      = H - 40
+
+slide.paste(tg_logo, (x_start, ty - ih//2 + 8), tg_logo)
+draw = ImageDraw.Draw(slide)
+draw.text((x_start + iw + gap, ty - 4), tg_text, font=F_SMALL, fill=(240, 180, 41))
 
 # ── 5. Save ───────────────────────────────────────────────────────────────────
 out = os.path.join(OUT_DIR, "titus_carousel_1_hook.png")
