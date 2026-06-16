@@ -61,18 +61,27 @@ def shadow_text(img, x, y, text, font, fill):
     ImageDraw.Draw(img).text((x, y), text, font=font, fill=fill)
 
 def make_bg(filename, darken_top=False):
-    """Fill-crop the source photo to 1080x1920, then darken for legibility."""
+    """Blurred full-bleed backdrop with the photo composited on top at its
+    true proportions, so a 3:4 source isn't force-cropped/zoomed into 9:16."""
     img = Image.open(os.path.join(SRC_DIR, filename)).convert("RGB")
     img = ImageOps.exif_transpose(img)
-    scale_w = W / img.width
-    scale_h = H / img.height
-    scale   = max(scale_w, scale_h)
-    new_w   = int(img.width * scale)
-    new_h   = int(img.height * scale)
-    img     = img.resize((new_w, new_h), Image.LANCZOS)
-    left    = (new_w - W) // 2
-    top     = (new_h - H) // 2
-    img     = img.crop((left, top, left + W, top + H))
+
+    # Blurred backdrop: fill-crop (may zoom) but blurred so the crop isn't noticeable.
+    bscale   = max(W / img.width, H / img.height)
+    bw, bh   = int(img.width * bscale), int(img.height * bscale)
+    backdrop = img.resize((bw, bh), Image.LANCZOS)
+    bleft, btop = (bw - W) // 2, (bh - H) // 2
+    backdrop = backdrop.crop((bleft, btop, bleft + W, btop + H))
+    backdrop = backdrop.filter(ImageFilter.GaussianBlur(45))
+
+    # Sharp photo, fit (not filled) so its real proportions are kept.
+    fscale = min(W / img.width, H / img.height)
+    fw, fh = int(img.width * fscale), int(img.height * fscale)
+    fitted = img.resize((fw, fh), Image.LANCZOS)
+    fx, fy = (W - fw) // 2, (H - fh) // 2
+
+    canvas = backdrop.convert("RGBA")
+    canvas.paste(fitted, (fx, fy))
 
     overlay   = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     od        = ImageDraw.Draw(overlay)
@@ -82,7 +91,7 @@ def make_bg(filename, darken_top=False):
         alpha = int(top_alpha + (bot_alpha - top_alpha) * (y / (H - 1)))
         od.line([(0, y), (W, y)], fill=(0, 0, 0, alpha))
 
-    return Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+    return Image.alpha_composite(canvas, overlay).convert("RGB")
 
 def add_branding(img):
     logo = Image.open(LOGO_PATH).convert("RGBA")
