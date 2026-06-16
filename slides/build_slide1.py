@@ -69,82 +69,87 @@ draw  = ImageDraw.Draw(slide)
 # Headline broken into lines manually for max impact
 #
 
+PAD     = 60          # left/right padding
+MAX_W   = W - PAD*2  # 960px usable width
+
 def text_w(draw, text, font):
     return draw.textbbox((0, 0), text, font=font)[2]
 
-def draw_line_mixed(draw, segments, y, font, line_w=W, pad=60):
-    """Draw a line with mixed colours. segments = [(text, colour), ...]"""
-    total = sum(draw.textbbox((0,0), t, font=font)[2] for t, _ in segments)
-    x     = (line_w - total) // 2  # centre
-    for text, colour in segments:
-        draw.text((x, y), text, font=font, fill=colour)
-        x += draw.textbbox((0,0), text, font=font)[2]
-    return y + draw.textbbox((0,0), "A", font=font)[3] + 4
+def fit_font(draw, text, max_size, min_size=36):
+    """Return largest font that fits within MAX_W."""
+    for size in range(max_size, min_size - 1, -2):
+        f = load(BOLD, size)
+        if text_w(draw, text, f) <= MAX_W:
+            return f
+    return load(BOLD, min_size)
 
 def draw_centred(draw, text, font, y, fill=WHITE):
-    tw = text_w(draw, text, font)
-    draw.text(((W - tw) // 2, y), text, font=font, fill=fill)
-    return y + draw.textbbox((0,0), text, font=font)[3] + 6
+    x = (W - text_w(draw, text, font)) // 2
+    draw.text((x, y), text, font=font, fill=fill)
+    lh = draw.textbbox((0,0), "A", font=font)[3]
+    return y + lh + 8
 
-# ── 4. Logo bottom centre ─────────────────────────────────────────────────────
+def draw_mixed(draw, segments, font, y):
+    total = sum(text_w(draw, t, font) for t, _ in segments)
+    x     = (W - total) // 2
+    for text, colour in segments:
+        draw.text((x, y), text, font=font, fill=colour)
+        x += text_w(draw, text, font)
+    lh = draw.textbbox((0,0), "A", font=font)[3]
+    return y + lh + 8
+
+# ── 4. Logo + Telegram bottom ─────────────────────────────────────────────────
 logo = Image.open(LOGO_PATH).convert("RGBA")
 logo.thumbnail((160, 160), Image.LANCZOS)
 lw, lh = logo.size
-lx     = (W - lw) // 2
-ly     = H - lh - 40
-slide.paste(logo, (lx, ly), logo)
+ly     = H - lh - 70
+slide.paste(logo, ((W - lw)//2, ly), logo)
 
-# Calculate available text height: from 42% down to just above logo
-text_top  = int(H * 0.40)
-text_bot  = ly - 20   # stop just above logo
 draw = ImageDraw.Draw(slide)
 
-# Measure total text block height so we can centre it
-line_gap = 8
-lines = [
-    ("BEFORE YOU PLACE", F_LARGE, WHITE),
-    ("ANOTHER TRADE —",  F_LARGE, WHITE),
-    ("MASTER MARKET",    F_LARGE, WHITE),   # gold handled separately
-    ("STRUCTURE.",       F_LARGE, GOLD),
-    ("HERE'S WHAT THE",  F_MED,   WHITE),
-    ("PROS DON'T TEACH:", F_MED,  WHITE),
+# ── 5. Text block: auto-fit fonts, stack from 38% down to just above logo ────
+text_top = int(H * 0.36)
+text_bot = ly - 16
+
+# Define lines with their preferred max font size
+line_defs = [
+    ("EVERY TRADER NEEDS",   F_LARGE, WHITE),
+    ("TO KNOW THIS FIRST.",  F_LARGE, WHITE),
+    ("THE TRUTH ABOUT",      F_MED,   WHITE),
+    ("MARKET STRUCTURE",     F_LARGE, GOLD),
+    ("THE PROS NEVER TEACH", F_MED,   WHITE),
+    ("SWIPE TO LEARN →",     F_SMALL, GOLD),
 ]
 
-def line_h(font):
-    return draw.textbbox((0,0), "A", font=font)[3] + line_gap
+# Auto-fit each line
+fitted = []
+for text, preferred, colour in line_defs:
+    font = fit_font(draw, text, preferred.size if hasattr(preferred, 'size') else 96)
+    fitted.append((text, font, colour))
 
-total_h = (line_h(F_LARGE)*4 + line_h(F_MED)*2 +
-           line_h(F_SMALL))   # swipe cue
-avail   = text_bot - text_top
-y_start = text_top + max(0, (avail - total_h) // 2)
+# Measure total height
+gap       = 10
+total_h   = sum(draw.textbbox((0,0),"A",font=f)[3] + gap for _, f, _ in fitted)
+avail     = text_bot - text_top
+y         = text_top + max(0, (avail - total_h) // 2)
 
-y = y_start
-y = draw_centred(draw, "EVERY TRADER NEEDS",  F_LARGE, y)
-y = draw_centred(draw, "TO KNOW THIS FIRST.",   F_LARGE, y)
-y = draw_line_mixed(draw, [("THE TRUTH ABOUT ", WHITE), ("MARKET", GOLD)], y, F_MED) + line_gap
-y = draw_centred(draw, "STRUCTURE",  F_LARGE, y, fill=GOLD)
-y = draw_centred(draw, "THE PROS NEVER", F_MED, y + 4)
-y = draw_centred(draw, "TALK ABOUT:", F_MED, y)
-y += 18
-y = draw_line_mixed(draw, [("SWIPE TO LEARN  ", WHITE), ("→", GOLD)], y, F_SMALL)
+for text, font, colour in fitted:
+    y = draw_centred(draw, text, font, y, fill=colour)
 
-# Telegram logo + @titus.net under brand logo
+# Telegram logo + @titus.net
 from PIL import Image as _Img
 tg_logo = _Img.open(os.path.join(os.path.dirname(__file__), "telegram_logo.png")).convert("RGBA")
 tg_logo.thumbnail((44, 44), _Img.LANCZOS)
 iw, ih  = tg_logo.size
-
-draw    = ImageDraw.Draw(slide)
 tg_text = "@titus.net"
-txt_w   = text_w(draw, tg_text, F_SMALL)
-gap     = 10
-total   = iw + gap + txt_w
-x_start = (W - total) // 2
-ty      = H - 40
-
-slide.paste(tg_logo, (x_start, ty - ih//2 + 8), tg_logo)
+tg_font = load(BOLD, 32)
+tgw     = text_w(draw, tg_text, tg_font)
+total   = iw + 10 + tgw
+xs      = (W - total) // 2
+ty      = H - 44
+slide.paste(tg_logo, (xs, ty - ih//2 + 10), tg_logo)
 draw = ImageDraw.Draw(slide)
-draw.text((x_start + iw + gap, ty - 4), tg_text, font=F_SMALL, fill=(240, 180, 41))
+draw.text((xs + iw + 10, ty), tg_text, font=tg_font, fill=GOLD)
 
 # ── 5. Save ───────────────────────────────────────────────────────────────────
 out = os.path.join(OUT_DIR, "titus_carousel_1_hook.png")
