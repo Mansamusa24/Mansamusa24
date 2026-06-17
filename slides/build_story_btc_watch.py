@@ -62,9 +62,28 @@ def remove_mco_watermark(img):
     logo.putalpha(logo.getchannel("A").point(lambda a: int(a * 0.9)))
     img.paste(logo, (430 - lw // 2, 95 - lh_ // 2), logo)
 
+def remove_mco_subtext(img, original):
+    """Blur out the 'MCO Global | www.mcoglobalonline.com' line, preserving
+    the (3) and (5) wave-count labels that sit partly on top of it. The
+    labels are restored by glyph brightness mask rather than a hard
+    rectangle, so no seam shows around them."""
+    keep_boxes = [(514, 225, 590, 277), (626, 213, 705, 261)]
+
+    band_box = (0, 200, 858, 252)
+    band = img.crop(band_box).filter(ImageFilter.GaussianBlur(18))
+    img.paste(band, band_box[:2])
+
+    for kb in keep_boxes:
+        patch = original.crop(kb)
+        gray  = patch.convert("L")
+        mask  = gray.point(lambda v: 255 if v > 175 else 0).filter(ImageFilter.GaussianBlur(1.0))
+        img.paste(patch, kb[:2], mask)
+
 def build():
-    img  = make_bg().convert("RGBA")
+    img      = make_bg().convert("RGBA")
+    original = img.copy()
     remove_mco_watermark(img)
+    remove_mco_subtext(img, original)
     draw = ImageDraw.Draw(img)
 
     # Mark up the fib confluence zone (38.2% -> 61.8%) with a hand-drawn-style box.
