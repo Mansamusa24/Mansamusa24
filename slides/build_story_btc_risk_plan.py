@@ -21,10 +21,10 @@ def build():
 
     img = img.convert("RGBA")
     logo = Image.open(LOGO_PATH).convert("RGBA")
-    logo.thumbnail((110, 110), Image.LANCZOS)
+    logo.thumbnail((220, 220), Image.LANCZOS)
     lw, lh_ = logo.size
     logo.putalpha(logo.getchannel("A").point(lambda a: int(a * 0.85)))
-    img.paste(logo, (img.width - lw - 30, img.height - lh_ - 30), logo)
+    img.paste(logo, (30, img.height - lh_ - 30), logo)
 
     img = img.convert("RGB")
     out = os.path.join(OUT_DIR, "btc_risk_plan.jpg")
