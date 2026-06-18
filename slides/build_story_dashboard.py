@@ -19,6 +19,10 @@ os.makedirs(OUT_DIR, exist_ok=True)
 ADDR_BAR_BOX = (1800, 100, 2440, 205)
 # Red "not secure" caution badge sitting in the tab row, left of the tabs.
 CAUTION_BOX  = (1075, 65, 1200, 150)
+# Tight crop on just the screen: the laptop is shot at an angle, so this
+# clears the screen's tilted left edge and bottom edge everywhere, cutting
+# out the keyboard and surrounding desk/bezel dead space.
+SCREEN_CROP  = (200, 0, 3023, 2450)
 
 def build():
     img = Image.open(SRC).convert("RGB")
@@ -37,6 +41,7 @@ def build():
     img.paste(logo, (cx - lw // 2, cy - lh // 2), logo)
 
     img = img.convert("RGB")
+    img = img.crop(SCREEN_CROP)
     out = os.path.join(OUT_DIR, "dashboard_story.jpg")
     img.save(out, "JPEG", quality=95)
     print(f"  ✓ {out}")
