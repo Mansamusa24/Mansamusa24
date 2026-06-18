@@ -17,12 +17,15 @@ os.makedirs(OUT_DIR, exist_ok=True)
 # Address-bar row only (tab row above and dashboard ticker below are left
 # untouched), found by pixel-sampling the toolbar's grey band.
 ADDR_BAR_BOX = (1800, 100, 2440, 205)
+# Red "not secure" caution badge sitting in the tab row, left of the tabs.
+CAUTION_BOX  = (1075, 65, 1200, 150)
 
 def build():
     img = Image.open(SRC).convert("RGB")
 
-    band = img.crop(ADDR_BAR_BOX).filter(ImageFilter.GaussianBlur(25))
-    img.paste(band, ADDR_BAR_BOX[:2])
+    for box in (ADDR_BAR_BOX, CAUTION_BOX):
+        band = img.crop(box).filter(ImageFilter.GaussianBlur(25))
+        img.paste(band, box[:2])
 
     img = img.convert("RGBA")
     logo = Image.open(LOGO_PATH).convert("RGBA")
