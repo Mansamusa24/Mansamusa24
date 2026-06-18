@@ -21,10 +21,12 @@ def build():
 
     img = img.convert("RGBA")
     logo = Image.open(LOGO_PATH).convert("RGBA")
-    logo.thumbnail((220, 220), Image.LANCZOS)
+    logo.thumbnail((300, 300), Image.LANCZOS)
     lw, lh_ = logo.size
     logo.putalpha(logo.getchannel("A").point(lambda a: int(a * 0.85)))
-    img.paste(logo, (30, img.height - lh_ - 30), logo)
+    # Centered over the top of the RSI panel (RSI label/gridline sits at y~1245-1300).
+    rsi_centre_x = 480
+    img.paste(logo, (rsi_centre_x - lw // 2, 1310), logo)
 
     img = img.convert("RGB")
     out = os.path.join(OUT_DIR, "btc_risk_plan.jpg")
