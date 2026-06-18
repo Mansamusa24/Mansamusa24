@@ -22,6 +22,7 @@ CAUTION_BOX  = (1075, 65, 1200, 150)
 
 def build():
     img = Image.open(SRC).convert("RGB")
+    img = img.filter(ImageFilter.UnsharpMask(radius=3, percent=160, threshold=2))
 
     for box in (ADDR_BAR_BOX, CAUTION_BOX):
         band = img.crop(box).filter(ImageFilter.GaussianBlur(25))
