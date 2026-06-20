@@ -14,7 +14,7 @@ SRC       = os.path.join(BASE_DIR, "stories", "source", "btc_resistance_short.jp
 OUT_DIR   = os.path.join(BASE_DIR, "stories", "output")
 LOGO_PATH = os.path.join(BASE_DIR, "titus_logo_transparent.png")
 FONT_DIR  = os.path.join(BASE_DIR, "fonts")
-NOTE_FONT = f"{FONT_DIR}/Italiana-Regular.ttf"
+NOTE_FONT = f"{FONT_DIR}/Anton-Regular.ttf"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 GOLD  = (240, 180, 41)
@@ -48,12 +48,12 @@ def build():
     note_top = 1090
     draw_arrow(draw, arrow_x, zone_y, note_top - 20, GOLD)
 
-    note_font = load_note(54)
-    note_lines = ["approaching the", "fib resistance cluster —", "watching for a rejection"]
+    note_font = load_note(42)
+    note_lines = ["APPROACHING THE", "FIB RESISTANCE CLUSTER", "WATCHING FOR A REJECTION"]
     ny = note_top
     for line in note_lines:
         draw.text((420, ny), line, font=note_font, fill=WHITE)
-        ny += 64
+        ny += 58
 
     # Small logo watermark, in the clear space inside the (4) resistance
     # zone at top, away from any price data.
