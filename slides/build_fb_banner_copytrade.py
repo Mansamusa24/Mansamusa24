@@ -30,6 +30,10 @@ CANVAS_W, CANVAS_H = 1640, 624
 PROFILE_C = (CANVAS_W // 2, 546)
 PROFILE_R = 225
 
+# Facebook's mobile cover view is taller than the 1640x624 image, so it crops
+# roughly this many pixels off each side. Keep all content inside these lines.
+SIDE_CROP = 150
+
 def f(size):
     try:    return ImageFont.truetype(FONT, size)
     except: return ImageFont.load_default()
@@ -57,11 +61,12 @@ def build():
     sw = draw.textlength(sub, font=sub_font)
     draw.text(((CANVAS_W - sw) / 2, 112), sub, font=sub_font, fill=WHITE)
 
-    # --- Two panels flanking the centre, near the outer edges ---
-    panel_w, panel_h = 430, 210
-    margin = 70
-    pad = 30
-    y0 = 260
+    # --- Two panels flanking the centre, inside the side-crop, clear of the
+    # centre profile circle ---
+    panel_w, panel_h = 370, 205
+    margin = 190          # > SIDE_CROP so the outer border survives the crop
+    pad = 28
+    y0 = 258
     positions = [margin, CANVAS_W - margin - panel_w]
     for block, x in [(ku, positions[0]), (bg, positions[1])]:
         draw.rounded_rectangle(
@@ -77,6 +82,9 @@ def build():
         cx, cy = PROFILE_C
         draw.ellipse([cx - PROFILE_R, cy - PROFILE_R, cx + PROFILE_R, cy + PROFILE_R],
                      outline=(255, 0, 0), width=4)
+        draw.line([(SIDE_CROP, 0), (SIDE_CROP, CANVAS_H)], fill=(0, 200, 255), width=4)
+        draw.line([(CANVAS_W - SIDE_CROP, 0), (CANVAS_W - SIDE_CROP, CANVAS_H)],
+                  fill=(0, 200, 255), width=4)
 
     canvas.save(os.path.join(OUT_DIR, "fb_banner_copytrade.jpg"), "JPEG", quality=95)
     print(f"  ✓ fb_banner_copytrade.jpg  ({CANVAS_W}x{CANVAS_H})  DEBUG={DEBUG}")
