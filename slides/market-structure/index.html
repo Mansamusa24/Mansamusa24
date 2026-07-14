@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Titus Trading Network — Market Structure Carousel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0A0A0F;
+      --bg2:      #12131A;
+      --gold:     #F0B429;
+      --blue:     #3B82F6;
+      --white:    #FFFFFF;
+      --grey:     #9CA3AF;
+      --border:   #1E2030;
+      --w: 1080px;
+      --h: 1350px;
+    }
+
+    body {
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      padding: 40px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    h2.label {
+      color: var(--grey);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      text-align: center;
+      width: var(--w);
+    }
+
+    .slide {
+      width: var(--w);
+      height: var(--h);
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Shared BG chart lines ── */
+    .chart-bg {
+      position: absolute;
+      inset: 0;
+      opacity: 0.06;
+      background-image:
+        linear-gradient(to right, var(--gold) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--gold) 1px, transparent 1px);
+      background-size: 90px 90px;
+    }
+
+    /* ── Top Bar ── */
+    .topbar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 44px 60px 0;
+    }
+    .brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    .slide-num {
+      font-family: 'Inter', sans-serif;
+      font-size: 18px;
+      color: var(--grey);
+      font-weight: 500;
+    }
+    .divider {
+      position: relative;
+      z-index: 2;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), transparent);
+      margin: 20px 60px 0;
+    }
+
+    /* ── Bottom handle ── */
+    .handle {
+      position: absolute;
+      bottom: 44px;
+      left: 60px;
+      z-index: 2;
+      font-family: 'Inter', sans-serif;
+      font-size: 22px;
+      color: var(--grey);
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+
+    /* ════════════════════════════
+       SLIDE 1 — Hook
+    ════════════════════════════ */
+    .s1-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      gap: 48px;
+    }
+    .s1-eyebrow {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+    }
+    .s1-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 108px;
+      line-height: 1.0;
+      color: var(--white);
+      text-transform: uppercase;
+    }
+    .s1-headline span { color: var(--gold); }
+    .s1-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 28px;
+      color: var(--grey);
+      line-height: 1.5;
+      max-width: 800px;
+    }
+    .swipe-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--blue);
+      color: var(--white);
+      font-family: 'Space Grotesp', sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+      padding: 18px 40px;
+      border-radius: 6px;
+      letter-spacing: 1px;
+    }
+
+    /* corner accent */
+    .corner-tl {
+      position: absolute;
+      top: 130px;
+      left: 60px;
+      width: 60px;
+      height: 60px;
+      border-top: 3px solid var(--gold);
+      border-left: 3px solid var(--gold);
+      z-index: 2;
+    }
+    .corner-br {
+      position: absolute;
+      bottom: 80px;
+      right: 60px;
+      width: 60px;
+      height: 60px;
+      border-bottom: 3px solid var(--gold);
+      border-right: 3px solid var(--gold);
+      z-index: 2;
+    }
+
+    /* ════════════════════════════
+       SLIDE 2-4 — Content
+    ════════════════════════════ */
+    .content-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 60px 60px 100px;
+      position: relative;
+      z-index: 2;
+      gap: 40px;
+    }
+    .content-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 80px;
+      line-height: 1.0;
+      color: var(--white);
+      text-transform: uppercase;
+    }
+    .content-headline span { color: var(--gold); }
+    .content-body-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 30px;
+      color: #D1D5DB;
+      line-height: 1.6;
+    }
+    .callout-box {
+      background: var(--bg2);
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      padding: 36px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .callout-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .callout-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+      width: 36px;
+      margin-top: 2px;
+    }
+    .callout-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 28px;
+      color: var(--white);
+      line-height: 1.5;
+    }
+    .callout-text strong { color: var(--gold); }
+
+    /* ════════════════════════════
+       SLIDE 5 — Chart placeholder
+    ════════════════════════════ */
+    .chart-placeholder {
+      margin: 0 60px;
+      flex: 1;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      position: relative;
+      z-index: 2;
+      overflow: hidden;
+    }
+    .chart-placeholder svg {
+      width: 100%;
+      height: 300px;
+      opacity: 0.5;
+    }
+    .chart-label {
+      position: absolute;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--gold);
+      background: rgba(0,0,0,0.8);
+      padding: 8px 20px;
+      border-radius: 4px;
+      border: 1px solid var(--gold);
+    }
+    .chart-caption {
+      padding: 28px 60px 0;
+      font-family: 'Inter', sans-serif;
+      font-size: 26px;
+      color: var(--grey);
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ════════════════════════════
+       SLIDE 6 — CTA
+    ════════════════════════════ */
+    .cta-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      gap: 40px;
+    }
+    .cta-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 96px;
+      line-height: 1.05;
+      color: var(--white);
+      text-transform: uppercase;
+    }
+    .cta-headline span { color: var(--gold); }
+    .cta-box {
+      border: 2px solid var(--gold);
+      border-radius: 8px;
+      padding: 36px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    .cta-box-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+    .cta-box-link {
+      font-family: 'Inter', sans-serif;
+      font-size: 32px;
+      color: var(--white);
+      font-weight: 600;
+    }
+    .cta-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 26px;
+      color: var(--grey);
+    }
+
+    /* Glow accents */
+    .glow-gold {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(240,180,41,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .glow-blue {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(59,130,246,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════ SLIDE 1 — Hook ════════════ -->
+<h2 class="label">SLIDE 1 — Hook</h2>
+<div class="slide">
+  <div class="chart-bg"></div>
+  <div class="glow-gold" style="top:-100px;right:-100px;"></div>
+  <div class="glow-blue" style="bottom:0;left:-100px;"></div>
+  <div class="corner-tl"></div>
+  <div class="corner-br"></div>
+  <div class="topbar">
+    <div class="brand">— Titus —</div>
+  </div>
+  <div class="divider"></div>
+  <div class="s1-body">
+    <div class="s1-eyebrow">Market Structure</div>
+    <div class="s1-headline">Every trader<br>needs to know<br><span>this first.</span></div>
+    <div class="s1-sub">Before you place another trade — understand the foundation every profitable setup is built on.</div>
+    <div class="swipe-cta">Swipe to learn &nbsp;→</div>
+  </div>
+  <div class="handle">@titustradingnetwork</div>
+</div>
+
+<!-- ════════════ SLIDE 2 — What Is Market Structure ════════════ -->
+<h2 class="label">SLIDE 2 — What Is Market Structure?</h2>
+<div class="slide">
+  <div class="chart-bg"></div>
+  <div class="glow-gold" style="top:200px;left:-100px;"></div>
+  <div class="topbar">
+    <div class="brand">— Titus —</div>
+    <div class="slide-num">02 / 06</div>
+  </div>
+  <div class="divider"></div>
+  <div class="content-body">
+    <div class="content-headline">What is<br><span>Market Structure?</span></div>
+    <div class="content-body-text">
+      Market structure is how price moves through the market — it tells you whether buyers or sellers are in control at any given moment.
+    </div>
+    <div class="callout-box">
+      <div class="callout-row">
+        <div class="callout-icon">📈</div>
+        <div class="callout-text"><strong>Uptrend</strong> — Higher Highs + Higher Lows. Buyers in control.</div>
+      </div>
+      <div class="callout-row">
+        <div class="callout-icon">📉</div>
+        <div class="callout-text"><strong>Downtrend</strong> — Lower Highs + Lower Lows. Sellers in control.</div>
+      </div>
+      <div class="callout-row">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-text"><strong>Ranging</strong> — Price bouncing between the same highs and lows.</div>
+      </div>
+    </div>
+    <div class="content-body-text" style="font-size:26px;color:#9CA3AF;">
+      Master this — and you'll always know <em style="color:white;">who is winning</em> before you enter.
+    </div>
+  </div>
+  <div class="handle">@titustradingnetwork</div>
+</div>
+
+<!-- ════════════ SLIDE 3 — Break of Structure ════════════ -->
+<h2 class="label">SLIDE 3 — Break of Structure</h2>
+<div class="slide">
+  <div class="chart-bg"></div>
+  <div class="glow-blue" style="top:300px;right:-100px;"></div>
+  <div class="topbar">
+    <div class="brand">— Titus —</div>
+    <div class="slide-num">03 / 06</div>
+  </div>
+  <div class="divider"></div>
+  <div class="content-body">
+    <div class="content-headline">Break of<br><span>Structure (BOS)</span></div>
+    <div class="content-body-text">
+      A Break of Structure is when price breaks a key swing high or low — signalling a potential <strong style="color:var(--gold);">shift in trend</strong>.
+    </div>
+    <div class="callout-box">
+      <div class="callout-row">
+        <div class="callout-icon">🔼</div>
+        <div class="callout-text"><strong>Bullish BOS</strong> — Price breaks above a previous swing high. Look for buys.</div>
+      </div>
+      <div class="callout-row">
+        <div class="callout-icon">🔽</div>
+        <div class="callout-text"><strong>Bearish BOS</strong> — Price breaks below a previous swing low. Look for sells.</div>
+      </div>
+      <div class="callout-row">
+        <div class="callout-icon">⚡</div>
+        <div class="callout-text"><strong>CHoCH</strong> — Change of Character. First sign the trend is reversing.</div>
+      </div>
+    </div>
+    <div class="content-body-text" style="font-size:26px;color:#9CA3AF;">
+      BOS = confirmation. CHoCH = warning. Know the difference.
+    </div>
+  </div>
+  <div class="handle">@titustradingnetwork</div>
+</div>
+
+<!-- ════════════ SLIDE 4 — How To Trade It ════════════ -->
+<h2 class="label">SLIDE 4 — How To Trade It</h2>
+<div class="slide">
+  <div class="chart-bg"></div>
+  <div class="glow-gold" style="bottom:100px;right:-50px;"></div>
+  <div class="topbar">
+    <div class="brand">— Titus —</div>
+    <div class="slide-num">04 / 06</div>
+  </div>
+  <div class="divider"></div>
+  <div class="content-body">
+    <div class="content-headline">How to<br><span>Trade It</span></div>
+    <div class="content-body-text">
+      Don't just spot the structure — trade it with a clear process.
+    </div>
+    <div class="callout-box">
+      <div class="callout-row">
+        <div class="callout-icon">1️⃣</div>
+        <div class="callout-text">Identify the <strong>current trend</strong> on the higher timeframe (H4 or Daily).</div>
+      </div>
+      <div class="callout-row">
+        <div class="callout-icon">2️⃣</div>
+        <div class="callout-text">Wait for a <strong>BOS or CHoCH</strong> on the lower timeframe (15m or 1H).</div>
+      </div>
+      <div class="callout-row">
+        <div class="callout-icon">3️⃣</div>
+        <div class="callout-text">Enter on the <strong>retest</strong> of the broken structure level.</div>
+      </div>
+      <div class="callout-row">
+        <div class="callout-icon">4️⃣</div>
+        <div class="callout-text">Set SL below the swing low. Target the <strong>next key level</strong>.</div>
+      </div>
+    </div>
+  </div>
+  <div class="handle">@titustradingnetwork</div>
+</div>
+
+<!-- ════════════ SLIDE 5 — Chart Placeholder ════════════ -->
+<h2 class="label">SLIDE 5 — Chart (Replace with TradingView Screenshot)</h2>
+<div class="slide">
+  <div class="chart-bg"></div>
+  <div class="topbar">
+    <div class="brand">— Titus —</div>
+    <div class="slide-num">05 / 06</div>
+  </div>
+  <div class="divider"></div>
+  <div class="chart-placeholder" style="margin-top:40px;">
+    <svg viewBox="0 0 960 300" xmlns="http://www.w3.org/2000/svg">
+      <polyline points="0,250 80,220 160,230 240,180 320,190 400,130 480,145 560,90 620,110 680,60 760,80 840,30 960,50"
+        fill="none" stroke="#F0B429" stroke-width="3"/>
+      <polyline points="0,250 80,220 160,230 240,180 320,190 400,130"
+        fill="rgba(240,180,41,0.08)" stroke="none"/>
+      <!-- BOS arrow -->
+      <line x1="400" y1="170" x2="400" y2="100" stroke="#3B82F6" stroke-width="2" stroke-dasharray="6"/>
+      <text x="410" y="140" fill="#3B82F6" font-size="18" font-family="Inter">BOS</text>
+      <!-- CHoCH arrow -->
+      <line x1="620" y1="150" x2="620" y2="80" stroke="#EF4444" stroke-width="2" stroke-dasharray="6"/>
+      <text x="630" y="120" fill="#EF4444" font-size="18" font-family="Inter">CHoCH</text>
+    </svg>
+    <div class="chart-label">📊 Replace with your TradingView chart</div>
+  </div>
+  <div class="chart-caption">
+    Example: BOS confirmed on H1 → price retested structure → clean entry zone formed.
+  </div>
+  <div class="handle">@titustradingnetwork</div>
+</div>
+
+<!-- ════════════ SLIDE 6 — CTA ════════════ -->
+<h2 class="label">SLIDE 6 — CTA</h2>
+<div class="slide">
+  <div class="chart-bg"></div>
+  <div class="glow-gold" style="top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:700px;"></div>
+  <div class="corner-tl"></div>
+  <div class="corner-br"></div>
+  <div class="topbar">
+    <div class="brand">— Titus —</div>
+  </div>
+  <div class="divider"></div>
+  <div class="cta-body">
+    <div class="cta-headline">Follow for<br><span>daily setups</span><br>& breakdowns.</div>
+    <div class="cta-sub">No gatekeeping. Just real trading education.</div>
+    <div class="cta-box">
+      <div class="cta-box-label">Free Community</div>
+      <div class="cta-box-link">t.me/titus_net</div>
+    </div>
+    <div class="cta-sub" style="font-size:22px;">Drop a 📊 if this helped you →</div>
+  </div>
+  <div class="handle">@titustradingnetwork</div>
+</div>
+
+</body>
+</html>
